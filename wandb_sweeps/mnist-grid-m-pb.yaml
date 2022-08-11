@@ -1,0 +1,56 @@
+program: ./main_pb.py
+method: grid
+name: averaged-sweep
+project: meta-pb-stoch-labels
+parameters:
+  dataset:
+    value: "mnist"
+
+  train_sample_size:
+    value: 10
+
+  n_ways:
+    value: 5
+
+  n_shots:
+    values: [2, 5, 10, 20, 50]
+
+  per_task_lr:
+    value: 0.1
+
+  meta_lr:
+    value: 0.01
+
+  meta_batch_size:
+    value: 8
+
+  train_adapt_steps:
+    value: 50
+
+  test_adapt_steps:
+    value: 50
+
+  n_epochs:
+    value: 100
+
+  n_test_epochs:
+    values: [0, 5, 40]
+
+  beta:
+    value: 1.0
+
+  gamma:
+    value: 1.0
+    #values: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0, 1000.0, 10000.0]
+
+  load_trained_model:
+    value: True
+
+  is_adaptive:
+    values: [True, False]
+
+  mnist_pixels_to_permute_test:
+    value: 0
+
+  seed:
+    values: [42, 1337, 7, 13, 999, 752, 56789, 145790, 11, 306050]
