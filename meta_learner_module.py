@@ -41,7 +41,7 @@ def clone_model(base_model, ctor, device):
     return post_model
 
 
-class MetaLearnerFairPB(object):
+class MetaLearner(object):
     def __init__(
             self,
             per_task_lr,
@@ -49,12 +49,10 @@ class MetaLearnerFairPB(object):
             train_adapt_steps,
             test_adapt_steps,
             meta_batch_size,
-            nn_model,
             f_loss,
             device,
             seed,
             n_ways,
-            gamma,
             reset_clf_on_meta_loop,
             stochastic_model,
             stochastic_ctor,
@@ -67,10 +65,8 @@ class MetaLearnerFairPB(object):
         self.test_adapt_steps = test_adapt_steps
         self.device = device
         self.loss = f_loss
-        # self.test_opt = SimpleSGLDPriorSampling(self.maml.parameters(), meta_lr, beta=gamma)
-        #self.test_opt = torch.optim.Adam(self.maml.parameters(), meta_lr)
-        self.test_opt = torch.optim.Adam
-        self.test_opt_params = {"lr": per_task_lr}
+        self.optimizer = torch.optim.Adam
+        self.opt_params = {"lr": per_task_lr}
         self.seed = seed
         self.n_ways = n_ways
         self.reset_clf_on_meta_loop = reset_clf_on_meta_loop
@@ -124,7 +120,7 @@ class MetaLearnerFairPB(object):
             all_post_param = sum([list(posterior_model.parameters()) for posterior_model in posterior_models], [])
             prior_params = list(self.stochastic_model.parameters())
             all_params = all_post_param + prior_params
-            optimizer = self.test_opt(all_params, **self.test_opt_params) # TODO: clean code
+            optimizer = self.optimizer(all_params, **self.opt_params)
             for step in range(self.train_adapt_steps):
                 hyper_dvrg = get_hyper_divergnce(var_prior=1e2, var_posterior=1e-3, prior_model=self.stochastic_model,
                                                  device=self.device)
@@ -166,7 +162,7 @@ class MetaLearnerFairPB(object):
             all_post_param = sum([list(posterior_model.parameters()) for posterior_model in posterior_models], [])
             prior_params = list(self.stochastic_model.parameters())
             all_params = all_post_param + prior_params
-            optimizer = self.test_opt(all_params, **self.test_opt_params)
+            optimizer = self.optimizer(all_params, **self.opt_params)
             for step in range(self.train_adapt_steps):
                 if self.use_training_prior:
                     hyper_dvrg = get_net_densities_divergence(base_hyper_prior, self.stochastic_model, prm=1e-3)
@@ -182,13 +178,13 @@ class MetaLearnerFairPB(object):
 
         if self.analyze_layer_variance:
             run_prior_analysis(self.stochastic_model, False, save_path="./hyper-posterior_model")
+        # Standard meta-testing from here on
         prior = clone_model(self.stochastic_model, self.stochastic_ctor, self.device)
-        optimizer = self.test_opt(self.stochastic_model.parameters(), **self.test_opt_params)
+        optimizer = self.optimizer(self.stochastic_model.parameters(), **self.opt_params)
         for step in range(self.test_adapt_steps):
             loss, complexity = self.get_pb_terms_single_task(D_task_xs_adapt, D_task_ys_adapt,
                                                              prior, self.stochastic_model)
             pb_objective = loss + complexity
-            # TODO: PB data-dependant bound and optimization here!
             optimizer.zero_grad()
             pb_objective.backward()
             optimizer.step()
@@ -231,6 +227,7 @@ class MetaLearnerFairPB(object):
             D_task_xs_adapt, D_task_xs_error_eval, D_task_ys_adapt, D_task_ys_error_eval = self.split_adapt_eval(
                 batch)
 
+            # Note: we can potentially use D_task_xs_adapt to optimize the bound
             losses[i], complexities[i] = self.get_pb_terms_single_task(D_task_xs_error_eval, D_task_ys_error_eval,
                                                                        self.stochastic_model, posterior_models[i],
                                                                        hyper_dvrg=hyper_dvrg,
@@ -239,7 +236,7 @@ class MetaLearnerFairPB(object):
         return pb_objective
 
     def get_pb_terms_single_task(self, x, y, prior, posterior, hyper_dvrg=0, n_tasks=1):
-        n_MC = 3  # TODO: move hyper-params
+        n_MC = 3
         avg_empiric_loss = 0.0
         n_samples = len(y)
         for i_MC in range(n_MC):
@@ -248,7 +245,6 @@ class MetaLearnerFairPB(object):
             avg_empiric_loss_curr =1*  self.loss(outputs, y)
             avg_empiric_loss += (1 / n_MC) * avg_empiric_loss_curr
 
-        # TODO: we can optimize the bound using x_adapt, y_adapt...
         complexity = get_task_complexity(bound_type="McAllester", delta=0.1, kappa_post=1e-3,
                                          prior_model=prior, post_model=posterior,
                                          n_samples=n_samples, avg_empiric_loss=avg_empiric_loss, hyper_dvrg=hyper_dvrg,

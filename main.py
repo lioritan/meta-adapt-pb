@@ -2,7 +2,7 @@ import argparse
 import wandb
 import numpy as np
 
-from meta_learner_run_pb import run_meta_learnerPB
+from meta_learner_run_pb import run_meta_learner
 
 
 def get_parser():
@@ -31,10 +31,6 @@ def get_parser():
                         help="Should the clf layer be reset each meta loop (should make adaptation faster)")
     parser.add_argument('--n_test_epochs', default=40, type=int,
                         help="Meta epochs for test meta-adaptation")
-    parser.add_argument('--gamma', default=5000.0, type=float,
-                        help="Hyper-posterior gibbs parameter")
-    parser.add_argument('--beta', default=1000000.0, type=float,
-                        help="Base-posterior gibbs parameter")
     parser.add_argument('--load_trained_model', default=True, type=bool,
                         help="Load pretrained model")
     parser.add_argument('--is_adaptive', default=True, type=bool,
@@ -43,12 +39,14 @@ def get_parser():
                         help="permutes for mnist")
     parser.add_argument('--mnist_pixels_to_permute_test', default=100, type=int,
                         help="permutes for mnist")
-    parser.add_argument('--seed', type=int, default=56789, help="Random seed")
+    parser.add_argument('--mnist_permute_labels', default=False, type=bool,
+                        help="Whether to permute labels")
+    parser.add_argument('--seed', type=int, default=7, help="Random seed")
     return parser
 
 
 def run_experiment(args):
-    experiment_result = run_meta_learnerPB(
+    experiment_result = run_meta_learner(
         dataset=args.dataset,
         train_sample_size=args.train_sample_size,
         n_ways=args.n_ways,
@@ -61,11 +59,11 @@ def run_experiment(args):
         n_epochs=args.n_epochs,
         reset_clf_on_meta_loop=args.reset_clf_on_meta,
         n_test_epochs=args.n_test_epochs,
-        gamma=args.gamma,
         load_trained=args.load_trained_model,
         is_adaptive=args.is_adaptive,
         mnist_pixels_to_permute_train=args.mnist_pixels_to_permute_train,
         mnist_pixels_to_permute_test=args.mnist_pixels_to_permute_test,
+        mnist_permute_labels=args.mnist_permute_labels,
         seed=args.seed)
     meta_error, meta_accuracy, bound_err, bound_acc = \
         experiment_result[0], experiment_result[1], experiment_result[2], experiment_result[3]
@@ -74,7 +72,7 @@ def run_experiment(args):
 
 if __name__ == "__main__":
     args = get_parser().parse_args()
-    wandb.init(project="meta-pb-stoch26")
+    wandb.init(project="meta-pb-stochastic")
     wandb.config.update(args)
 
     if not args.load_trained_model:
@@ -83,14 +81,3 @@ if __name__ == "__main__":
 
     meta_error, meta_accuracy, bound_err, bound_acc = run_experiment(args)
     wandb.log({"test_loss": meta_error, "test_accuracy": meta_accuracy, "bound_loss": bound_err, "bound_acc": bound_acc})
-
-    # errors = []
-    # accuracies = []
-    # for seed in [42, 1337, 7, 13, 999]:
-    #     args.seed = seed
-    #     meta_error, meta_accuracy = run_experiment(args)
-    #     errors.append(meta_error)
-    #     accuracies.append(meta_accuracy)
-    #
-    # #wandb.log({"test_loss": np.mean(errors), "test_accuracy": np.mean(accuracies)})
-    # print(np.mean(accuracies))

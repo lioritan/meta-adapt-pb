@@ -5,10 +5,8 @@ from __future__ import absolute_import, division, print_function
 import torch
 from torch.autograd import Variable
 import math
-from utils import common as cmn
-import torch.nn.functional as F
 from models.stochastic_layers import StochasticLayer
-from utils.common import net_weights_magnitude, count_correct
+from utils.common import net_weights_magnitude
 # -----------------------------------------------------------------------------------------------------------#
 
 
@@ -18,7 +16,6 @@ def get_hyper_divergnce(var_prior, var_posterior, prior_model, device):   # corr
 
     # Note:  the hyper-prior is N(0, kappa_prior^2 * I)
     # Note:  the hyper-posterior is N(parameters-of-prior-distribution, kappa_post^2 * I)
-
 
     # KLD between hyper-posterior and hyper-prior:
     norm_sqr = net_weights_magnitude(prior_model, device, p=2)
@@ -85,6 +82,7 @@ def get_net_densities_divergence(prior_model, post_model, prm, noised_prior=Fals
     return total_dvrg
 # -------------------------------------------------------------------------------------------
 
+
 def  get_dvrg_element(post, prior, kappa_post, noised_prior=False):
     """KL divergence D_{KL}[post(x)||prior(x)] for a fully factorized Gaussian"""
 
@@ -111,9 +109,11 @@ def  get_dvrg_element(post, prior, kappa_post, noised_prior=False):
     return div_elem
 # -------------------------------------------------------------------------------------------
 
+
 def add_noise(param, std):
     return param + Variable(param.data.new(param.size()).normal_(0, std), requires_grad=False)
 # -------------------------------------------------------------------------------------------
+
 
 def add_noise_to_model(model, std):
 

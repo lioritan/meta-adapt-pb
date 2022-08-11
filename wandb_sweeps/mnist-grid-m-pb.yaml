@@ -36,13 +36,6 @@ parameters:
   n_test_epochs:
     values: [0, 5, 40]
 
-  beta:
-    value: 1.0
-
-  gamma:
-    value: 1.0
-    #values: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0, 1000.0, 10000.0]
-
   load_trained_model:
     value: True
 

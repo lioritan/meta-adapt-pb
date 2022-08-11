@@ -69,17 +69,12 @@ def create_limited_pixel_permute_trans(n_pixels_to_change):
     input_size = input_shape[0] * input_shape[1] * input_shape[2]
     inds_permute = torch.LongTensor(np.arange(0, input_size))
 
-    #seed = torch.random.initial_seed()
-    #torch.random.manual_seed(666)
-
     for i_shuffle in range(n_pixels_to_change):
         i1 = np.random.randint(0, input_size)
         i2 = np.random.randint(0, input_size)
         temp = inds_permute[i1]
         inds_permute[i1] = inds_permute[i2]
         inds_permute[i2] = temp
-
-    #torch.random.manual_seed(seed)
 
     transform_func = lambda x: permute_pixels(x, inds_permute)
     return transform_func
