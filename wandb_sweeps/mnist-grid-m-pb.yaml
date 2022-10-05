@@ -1,4 +1,4 @@
-program: ./main_pb.py
+program: ./main.py
 method: grid
 name: averaged-sweep
 project: meta-pb-stoch-labels
@@ -43,7 +43,7 @@ parameters:
     values: [True, False]
 
   mnist_pixels_to_permute_test:
-    value: 0
+    value: 100
 
   seed:
     values: [42, 1337, 7, 13, 999, 752, 56789, 145790, 11, 306050]
