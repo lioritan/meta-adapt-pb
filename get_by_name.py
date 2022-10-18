@@ -48,8 +48,8 @@ def get_algorithm_by_name(algorithm_name, args, dataset):
                               lambda x: dataset.get_stochastic_model(),
                               args.test_set_mult, args.meta_adaptation_is_adaptive)
     elif algorithm_name == "vampire":
-        kl_weight = 1e-4
-        num_models = 3
+        kl_weight = args.vampire_kl_weight
+        num_models = args.vampire_num_models
         data_loader = get_dataset_by_name(args.dataset, args).train_taskset(args.n_ways, args.n_shots)
         return VampireMetaLearner(args.per_task_lr, args.meta_lr, kl_weight, loss, args.train_adapt_steps,
                                   args.test_adapt_steps, args.meta_batch_size, device, args.seed, args.n_ways,

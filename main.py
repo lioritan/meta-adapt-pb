@@ -39,6 +39,10 @@ def get_parser():
 
     parser.add_argument('--meta_adaptation_is_adaptive', default=True, type=bool,
                         help="KL adapts during run or not")
+    parser.add_argument('--vampire_kl_weight', default=1e-4, type=float,
+                        help="Relative KL weight")
+    parser.add_argument('--vampire_num_models', default=3, type=int,
+                        help="number of models/MC averages for vampire")
     parser.add_argument('--mnist_pixels_to_permute_train', default=0, type=int,
                         help="permutes for mnist")
     parser.add_argument('--mnist_pixels_to_permute_test', default=100, type=int,
