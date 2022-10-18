@@ -8,9 +8,9 @@ from get_by_name import get_dataset_by_name, get_algorithm_by_name
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', default="mini-imagenet", choices=["mini-imagenet", "omniglot", "mnist"],
+    parser.add_argument('--dataset', default="mnist", choices=["mini-imagenet", "omniglot", "mnist"],
                         help="Dataset to use.")
-    parser.add_argument('--algorithm', default="train-on-test", choices=["train-on-test", "maml", "bayesian-vi", "meta-adaptation", "vampire"],
+    parser.add_argument('--algorithm', default="vampire", choices=["train-on-test", "maml", "bayesian-vi", "meta-adaptation", "vampire"],
                         help="algorithm to use.")
     parser.add_argument('--train_sample_size', default=100, type=int,
                         help="Number of training examples in the inner loop at meta-train time")
@@ -32,7 +32,7 @@ def get_parser():
                         help="Meta epochs for training")
     parser.add_argument('--n_test_epochs', default=40, type=int,
                         help="Meta epochs for test meta-adaptation")
-    parser.add_argument('--load_trained_model', default=False, type=bool,
+    parser.add_argument('--load_trained_model', default=True, type=bool,
                         help="Load pretrained model")
     parser.add_argument('--test_set_mult', default=5, type=int,
                         help="relative size of evaluation vs adaptation test sets")

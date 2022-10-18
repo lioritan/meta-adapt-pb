@@ -167,6 +167,18 @@ class MetaAdaptation(BaseMetaLearner):
                 pb_objective.backward()
                 optimizer.step()
 
+        # sample and single task adaptation
+        prior = clone_model(self.stochastic_model, self.model_ctor, self.device)
+        optimizer = self.optimizer(self.stochastic_model.parameters(), **self.opt_params)
+        for step in range(self.test_adapt_steps):
+            loss, complexity = self.get_pb_terms_single_task(D_task_xs_adapt, D_task_ys_adapt,
+                                                             prior, self.stochastic_model)
+            pb_objective = loss + complexity
+            # TODO: PB data-dependant bound and optimization here!
+            optimizer.zero_grad()
+            pb_objective.backward()
+            optimizer.step()
+
         self.stochastic_model.eval()
         evaluation_error, evaluation_accuracy = MetaAdaptation.run_eval_max_posterior(self.stochastic_model,
                                                                                       (D_task_xs_error_eval,

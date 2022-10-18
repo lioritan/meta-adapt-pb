@@ -1,4 +1,4 @@
-
+artifacts/*
 .idea/*
 *.pyc
 *.pkl
