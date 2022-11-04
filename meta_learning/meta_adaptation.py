@@ -174,7 +174,6 @@ class MetaAdaptation(BaseMetaLearner):
             loss, complexity = self.get_pb_terms_single_task(D_task_xs_adapt, D_task_ys_adapt,
                                                              prior, self.stochastic_model)
             pb_objective = loss + complexity
-            # TODO: PB data-dependant bound and optimization here!
             optimizer.zero_grad()
             pb_objective.backward()
             optimizer.step()

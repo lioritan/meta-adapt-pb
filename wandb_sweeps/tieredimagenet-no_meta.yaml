@@ -1,0 +1,38 @@
+program: ./main.py
+method: grid
+name: averaged-sweep
+project: meta-pb-tiernet-no_metalearn-cnn
+parameters:
+  dataset:
+    value: "tiered-imagenet"
+
+  algorithm:
+    value: "train-on-test"
+
+  n_ways:
+    value: 5
+
+  n_shots:
+    values: [1, 5] # 1 and 5 are enough
+
+  per_task_lr:
+    values: [0.1, 1e-2, 5e-3, 1e-3]
+
+  optimizer_weight_decay:
+      values: [0, 1e-5, 1e-4, 1e-3, 1e-2]
+
+
+
+  test_set_mult:
+    value: 5
+
+  n_test_epochs:
+    values: [50, 100]
+
+  load_trained_model:
+    value: False
+
+  seed:
+    values: [42, 1337, 7, 13, 999, 752, 56789, 145790, 11, 306050]
+
+# total of 10*2*4*5*2=800 runs

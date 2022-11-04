@@ -4,6 +4,7 @@ import torch.nn as nn
 from dataset_and_model.mini_imagenet_dataset_loader import MiniImagenetLoader
 from dataset_and_model.mnist_dataset_loader import MnistLoader
 from dataset_and_model.onmiglot_dataset_loader import OmniglotLoader
+from dataset_and_model.tiered_imagenet_dataset_loader import TieredImagenetLoader
 from meta_learning.bayesian_vi import BayesianVI
 from meta_learning.maml import MamlMetaLearner
 from meta_learning.meta_adaptation import MetaAdaptation
@@ -21,7 +22,7 @@ def get_dataset_by_name(dataset_name, args):
     elif dataset_name == "omniglot":
         return OmniglotLoader(args.n_ways, args.test_set_mult)
     elif dataset_name == "tiered-imagenet":
-        pass  # TODO
+        return TieredImagenetLoader(args.n_ways, args.test_set_mult)
 
 
 def get_algorithm_by_name(algorithm_name, args, dataset):
@@ -29,12 +30,14 @@ def get_algorithm_by_name(algorithm_name, args, dataset):
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     if algorithm_name == "train-on-test":
         return TrainOnTestLearner(args.per_task_lr, args.test_set_mult, loss,
-                                  device, args.seed, args.n_ways, dataset.get_deterministic_model())
+                                  device, args.seed, args.n_ways, dataset.get_deterministic_model(),
+                                  args.optimizer_weight_decay)
     elif algorithm_name == "maml":
         return MamlMetaLearner(args.per_task_lr, args.meta_lr, args.train_adapt_steps, args.test_adapt_steps,
                                args.meta_batch_size,
                                dataset.get_deterministic_model(), loss, device, args.seed, args.n_ways,
-                               args.test_set_mult)
+                               args.test_set_mult, args.optimizer_weight_decay, args.optimizer_lr_decay_epochs,
+                               args.optimizer_lr_schedule_type, args.early_stop)
     elif algorithm_name == "bayesian-vi":
         return BayesianVI(args.per_task_lr, args.meta_lr, args.train_adapt_steps, args.test_adapt_steps,
                           args.meta_batch_size,
@@ -52,5 +55,11 @@ def get_algorithm_by_name(algorithm_name, args, dataset):
         num_models = args.vampire_num_models
         data_loader = get_dataset_by_name(args.dataset, args).train_taskset(args.n_ways, args.n_shots)
         return VampireMetaLearner(args.per_task_lr, args.meta_lr, kl_weight, loss, args.train_adapt_steps,
+                                  args.test_adapt_steps, args.meta_batch_size, device, args.seed, args.n_ways,
+                                  args.n_shots, num_models, data_loader=data_loader, dataset_name=args.dataset)
+    elif algorithm_name == "bmaml":
+        num_models = args.bmaml_num_particles
+        data_loader = get_dataset_by_name(args.dataset, args).train_taskset(args.n_ways, args.n_shots)
+        return VampireMetaLearner(args.per_task_lr, args.meta_lr, loss, args.train_adapt_steps,
                                   args.test_adapt_steps, args.meta_batch_size, device, args.seed, args.n_ways,
                                   args.n_shots, num_models, data_loader=data_loader, dataset_name=args.dataset)

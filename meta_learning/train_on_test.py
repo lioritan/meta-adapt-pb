@@ -4,11 +4,11 @@ from meta_learning.base_meta_learner import BaseMetaLearner
 
 
 class TrainOnTestLearner(BaseMetaLearner):
-    def __init__(self, lr, shots_mult, loss_func, device, seed, n_ways, model):
+    def __init__(self, lr, shots_mult, loss_func, device, seed, n_ways, model, weight_decay=0):
         self.device = device
         self.model = model.to(device)
         self.lr = lr
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr, weight_decay=weight_decay)
         self.shots_mult = shots_mult
         self.loss_func = loss_func
         self.seed = seed

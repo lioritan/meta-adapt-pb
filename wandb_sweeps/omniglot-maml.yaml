@@ -1,0 +1,60 @@
+program: ./main.py
+method: grid
+name: averaged-sweep
+project: meta-pb-omni-maml
+parameters:
+  dataset:
+    value: "omniglot"
+
+  algorithm:
+    value: "maml"
+
+  n_ways:
+    value: 5
+
+  n_shots:
+    values: [1, 5]
+
+  per_task_lr:
+    values: [0.1, 1e-2, 5e-3, 1e-3]
+
+  meta_lr: # taken from the paper
+    values: [0.4]
+
+  train_adapt_steps: # taken from the paper
+    value: 1
+
+  train_sample_size:
+    value: 5
+
+  meta_batch_size: # taken from the paper
+    value: 32
+
+  n_epochs: # taken from the paper
+    value: 2000
+
+  test_adapt_steps: # taken from the paper
+      value: 3
+
+  optimizer_weight_decay:
+      values: [0, 1e-4, 1e-3, 1e-2]
+
+  optimizer_lr_decay_epochs:
+    value: 10
+
+  optimizer_lr_schedule_type:
+    values: ["no_change", "plateau", "step"]
+
+  early_stop:
+    value: True
+
+  test_set_mult:
+    value: 2
+
+  load_trained_model:
+    value: False
+
+  seed:
+    values: [42, 1337, 7, 13, 999, 752, 56789, 145790, 11, 306050]
+
+# total of 10*3*4*4*2=960 runs
