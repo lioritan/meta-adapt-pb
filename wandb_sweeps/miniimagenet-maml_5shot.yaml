@@ -15,11 +15,11 @@ parameters:
   n_shots:
     values: [5]
 
-  per_task_lr:
-    values: [0.1, 1e-2, 5e-3, 1e-3]
-
-  meta_lr: # taken from the paper
+  per_task_lr: # taken from the code
     values: [0.01]
+
+  meta_lr: # taken from the code
+    values: [0.001]
 
   train_adapt_steps: # taken from the paper
     value: 5
@@ -31,19 +31,19 @@ parameters:
     value: 2
 
   n_epochs: # taken from the paper
-    value: 12500
+    value: 60000
 
   test_adapt_steps: # taken from the paper
       value: 10
 
   optimizer_weight_decay:
-      values: [0, 1e-4, 1e-3, 1e-2]
+      values: [0, 1e-3, 1e-2]
 
   optimizer_lr_decay_epochs:
     value: 10
 
   optimizer_lr_schedule_type:
-    values: ["no_change", "plateau", "step"]
+    values: ["no_change"]
 
   early_stop:
     value: True
@@ -54,4 +54,4 @@ parameters:
   seed:
     values: [42, 1337, 7, 13, 999, 752, 56789, 145790, 11, 306050]
 
-# total of 10*3*4*4*2=960 runs
+# total of 10*3=30 runs

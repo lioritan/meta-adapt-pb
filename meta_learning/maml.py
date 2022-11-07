@@ -1,9 +1,11 @@
+import os
+
 import torch
 import learn2learn as l2l
 
 from meta_learning.base_meta_learner import BaseMetaLearner
 
-EARLY_STOP_THRESH = 1e-5
+EARLY_STOP_THRESH = 1e-3
 PLATEAU = "plateau"
 STEP = "step"
 
@@ -46,10 +48,15 @@ class MamlMetaLearner(BaseMetaLearner):
         predictions = learner(D_task_xs_error_eval)
         evaluation_error = self.loss(predictions, D_task_ys_error_eval)
         evaluation_accuracy = BaseMetaLearner.accuracy(predictions, D_task_ys_error_eval)
+
+        del D_task_xs_adapt, D_task_xs_error_eval, D_task_ys_adapt, D_task_ys_error_eval
         return evaluation_error, evaluation_accuracy
 
     def meta_train(self, train_taskset, validation_taskset, n_epochs):
-        last_val_loss = torch.inf
+        patience = 10  # TODO
+        count = 0
+        lowest_loss = torch.inf
+
         for epoch in range(n_epochs):
             self.optimizer.zero_grad()
             meta_train_error = 0.0
@@ -72,34 +79,52 @@ class MamlMetaLearner(BaseMetaLearner):
                 p.grad.data.mul_(1.0 / self.meta_batch_size)
             self.optimizer.step()
 
-            if not self.early_stop and self.lr_schedule_type != PLATEAU:
+            #cleanup
+            self.optimizer.zero_grad()
+            del batch, learner
+            torch.cuda.empty_cache()
+
+            if epoch+1 %100 == 0:
+                print(epoch)
+
+            if not self.early_stop:
                 self.lr_scheduler.step(epoch)
                 continue
 
-            # early stopping
+        # early stopping
             val_loss = torch.tensor(self.get_validation_loss(validation_taskset))
-            if self.early_stop and torch.abs(val_loss - last_val_loss) < EARLY_STOP_THRESH:
-                print("early stop")
-                break
-
-            # reduce lr
-            if self.lr_schedule_type == PLATEAU:
-                self.lr_scheduler.step(val_loss.item())
+            if val_loss <= lowest_loss - EARLY_STOP_THRESH:
+                lowest_loss = val_loss
+                count = 0
+                os.makedirs("artifacts/tmp/maml", exist_ok=True)
+                self.save_model("artifacts/tmp/maml/model.pkl")
             else:
-                self.lr_scheduler.step(epoch)
+                count += 1
+                if count >= patience:
+                    print(f"early stop condition met, epoch: {epoch}, {val_loss.item()}, {lowest_loss.item()}")
+                    if epoch < (n_epochs // 10):
+                        count = 0
+                        continue
+                    else:
+                        self.load_saved_model("artifacts/tmp/maml/model.pkl")
+                        os.remove("artifacts/tmp/maml/model.pkl")
+                        os.rmdir("artifacts/tmp/maml")
+                        break
 
     def get_validation_loss(self, validation_taskset):
         batch = validation_taskset.sample()
         D_task_xs_adapt, D_task_xs_error_eval, D_task_ys_adapt, D_task_ys_error_eval = self.split_adapt_eval(batch)
-        # TODO: OOM
         evaluation_error, evaluation_accuracy, _, _ = \
             self.meta_test_on_task(D_task_xs_adapt, D_task_ys_adapt, D_task_xs_error_eval, D_task_ys_error_eval,
-                                   n_epochs=1)
+                                   n_epochs=1, adapt_steps=self.train_adapt_steps)
+        del D_task_xs_adapt, D_task_xs_error_eval, D_task_ys_adapt, D_task_ys_error_eval
+        torch.cuda.empty_cache()
         return evaluation_error
 
-    def meta_test_on_task(self, D_task_xs_adapt, D_task_ys_adapt, D_task_xs_error_eval, D_task_ys_error_eval, n_epochs):
+    def meta_test_on_task(self, D_task_xs_adapt, D_task_ys_adapt, D_task_xs_error_eval, D_task_ys_error_eval, n_epochs, adapt_steps=None):
+        total_steps = adapt_steps if adapt_steps else self.test_adapt_steps
         learner = self.maml.clone()
-        for step in range(self.test_adapt_steps):
+        for step in range(total_steps):
             adaptation_error = self.loss(learner(D_task_xs_adapt), D_task_ys_adapt)
             learner.adapt(adaptation_error)
 
@@ -107,6 +132,7 @@ class MamlMetaLearner(BaseMetaLearner):
             test_predictions = learner(D_task_xs_error_eval)
             test_loss = self.loss(test_predictions, D_task_ys_error_eval)
             test_acc = BaseMetaLearner.accuracy(test_predictions, D_task_ys_error_eval)
+        del learner
         return test_loss.item(), test_acc.item(), None, None
 
     def load_saved_model(self, model_name):

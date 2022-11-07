@@ -58,13 +58,14 @@ def get_parser():
                         help="Weight decay parameter for optimizer")
     parser.add_argument('--optimizer_lr_decay_epochs', default=10, type=int,
                         help="Number of epochs until lr decay for step schedule")
-    parser.add_argument('--optimizer_lr_schedule_type', default="no_change", choices=["no_change", "plateau", "step"],
+    parser.add_argument('--optimizer_lr_schedule_type', default="no_change", choices=["no_change", "step"],
                         help="Type of lr schedule")
     # Note: boolean values don't work in argparse, so if this is set it is always true
     parser.add_argument('--early_stop', default=False, type=bool, help="early stop on validation")
 
     parser.add_argument('--seed', type=int, default=7, help="Random seed")
     return parser
+
 
 if __name__ == "__main__":
     args = get_parser().parse_args()

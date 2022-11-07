@@ -31,7 +31,6 @@ class ExperimentRunner(object):
     def run_experiment(self, algorithm: BaseMetaLearner, dataset: BaseDatasetLoader, seed):
         model_name = f"artifacts/{dataset.get_name()}/{str(algorithm.__class__.__name__)}.pkl"
         os.makedirs(f"artifacts/{dataset.get_name()}", exist_ok=True)
-        print(self.load_trained)
         if self.load_trained:
             print(f"load trained model")
             algorithm.load_saved_model(model_name=model_name)
