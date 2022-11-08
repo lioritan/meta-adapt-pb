@@ -1,5 +1,9 @@
+import subprocess
+import traceback
+
 import torch
 import torch.nn as nn
+import numpy as np
 
 from dataset_and_model.mini_imagenet_dataset_loader import MiniImagenetLoader
 from dataset_and_model.mnist_dataset_loader import MnistLoader
@@ -25,9 +29,23 @@ def get_dataset_by_name(dataset_name, args):
         return TieredImagenetLoader(args.n_ways, args.test_set_mult)
 
 
+def get_free_gpu():
+    if not torch.cuda.is_available():
+        return 'cpu'
+    try:
+        smi_result = subprocess.check_output("nvidia-smi -q -d Memory | grep -A4 GPU", shell=True)
+        gpu_info = smi_result.decode("utf-8").split("\n")
+        gpu_info = [int(line.split(":")[1].replace("MiB", "").strip()) for line in gpu_info if "Used" in line]
+        least_used_gpu = np.argmin(gpu_info)
+        return f'cuda:{least_used_gpu}'
+    except subprocess.CalledProcessError as e:
+        traceback.print_exc()
+        return 'cuda:0'
+
+
 def get_algorithm_by_name(algorithm_name, args, dataset):
     loss = nn.CrossEntropyLoss(reduction='mean')
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    device = torch.device(get_free_gpu())
     if algorithm_name == "train-on-test":
         return TrainOnTestLearner(args.per_task_lr, args.test_set_mult, loss,
                                   device, args.seed, args.n_ways, dataset.get_deterministic_model(),

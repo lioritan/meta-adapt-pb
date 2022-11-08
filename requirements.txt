@@ -1,3 +1,7 @@
+numpy # included in other package requirements
+matplotlib
+tensorboard
+requests>=2.26.0
 torch>=1.1.0
 torchvision>=0.3.0
 learn2learn>=0.1.7
