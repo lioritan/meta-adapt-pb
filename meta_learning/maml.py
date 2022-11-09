@@ -53,7 +53,7 @@ class MamlMetaLearner(BaseMetaLearner):
         return evaluation_error, evaluation_accuracy
 
     def meta_train(self, train_taskset, validation_taskset, n_epochs):
-        patience = 10  # TODO
+        patience = 50  # TODO
         count = 0
         lowest_loss = torch.inf
 

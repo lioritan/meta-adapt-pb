@@ -37,7 +37,8 @@ def get_free_gpu():
         smi_result = subprocess.check_output("nvidia-smi -q -d Memory | grep -A4 GPU", shell=True)
         gpu_info = smi_result.decode("utf-8").split("\n")
         gpu_info = [int(line.split(":")[1].replace("MiB", "").strip()) for line in gpu_info if "Used" in line]
-        least_used_gpu = np.argmin(gpu_info)
+        sufficiently_free_gpus = [used_mbs for used_mbs in gpu_info if used_mbs < (2**12)]
+        least_used_gpu = np.argmin(sufficiently_free_gpus) if len(sufficiently_free_gpus) > 0 else 0
         return f'cuda:{least_used_gpu}'
     except subprocess.CalledProcessError as e:
         traceback.print_exc()
