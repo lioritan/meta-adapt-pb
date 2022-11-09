@@ -33,6 +33,7 @@ def get_free_gpu():
     if not torch.cuda.is_available():
         return 'cpu'
     try:
+        # smi query lists all gpu devices and the memory usage, grep filters shared bar and such and only lists lines until the used memory one
         smi_result = subprocess.check_output("nvidia-smi -q -d Memory | grep -A4 GPU", shell=True)
         gpu_info = smi_result.decode("utf-8").split("\n")
         gpu_info = [int(line.split(":")[1].replace("MiB", "").strip()) for line in gpu_info if "Used" in line]
