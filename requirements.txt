@@ -1,4 +1,4 @@
-numpy # included in other package requirements
+numpy >= 1.19 # included in other package requirements
 matplotlib
 tensorboard
 requests>=2.26.0

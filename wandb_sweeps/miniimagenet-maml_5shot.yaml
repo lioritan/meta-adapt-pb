@@ -2,6 +2,11 @@ program: ./main.py
 method: grid
 name: averaged-sweep
 project: meta-pb-inet-maml
+command:
+  - ${env}
+  - python3
+  - ${program}
+  - ${args}
 parameters:
   dataset:
     value: "mini-imagenet"
@@ -54,4 +59,4 @@ parameters:
   seed:
     values: [42, 1337, 7, 13, 999, 752, 56789, 145790, 11, 306050]
 
-# total of 10*2=30 runs
+# total of 10*2=20 runs

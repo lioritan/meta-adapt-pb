@@ -2,6 +2,11 @@ program: ./main.py
 method: grid
 name: averaged-sweep
 project: meta-pb-inet-maml
+command:
+  - ${env}
+  - python3
+  - ${program}
+  - ${args}
 parameters:
   dataset:
     value: "mini-imagenet"
