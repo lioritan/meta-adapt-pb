@@ -97,7 +97,7 @@ class MamlMetaLearner(BaseMetaLearner):
                 lowest_loss = val_loss
                 count = 0
                 os.makedirs("artifacts/tmp/maml", exist_ok=True)
-                self.save_model("artifacts/tmp/maml/model.pkl")
+                self.save_model(f"artifacts/tmp/maml/model{self.seed}.pkl")
             else:
                 count += 1
                 if count >= patience:
@@ -106,8 +106,8 @@ class MamlMetaLearner(BaseMetaLearner):
                         count = 0
                         continue
                     else:
-                        self.load_saved_model("artifacts/tmp/maml/model.pkl")
-                        os.remove("artifacts/tmp/maml/model.pkl")
+                        self.load_saved_model(f"artifacts/tmp/maml/model{self.seed}.pkl")
+                        os.remove(f"artifacts/tmp/maml/model{self.seed}.pkl")
                         os.rmdir("artifacts/tmp/maml")
                         break
 
