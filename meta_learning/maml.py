@@ -108,7 +108,7 @@ class MamlMetaLearner(BaseMetaLearner):
                     else:
                         self.load_saved_model(f"artifacts/tmp/maml/model{self.seed}.pkl")
                         os.remove(f"artifacts/tmp/maml/model{self.seed}.pkl")
-                        os.rmdir("artifacts/tmp/maml")
+                        #os.rmdir("artifacts/tmp/maml")
                         break
 
     def get_validation_loss(self, validation_taskset):
