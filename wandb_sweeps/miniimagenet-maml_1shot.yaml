@@ -54,7 +54,7 @@ parameters:
     value: True
 
   test_set_mult:
-    value: 5
+    value: 4
 
   seed:
     values: [42, 1337, 7, 13, 999, 752, 56789, 145790, 11, 306050]
