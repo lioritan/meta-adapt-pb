@@ -42,7 +42,7 @@ parameters:
       value: 10
 
   optimizer_weight_decay:
-      values: [0, 1e-3]
+      values: [0]
 
   optimizer_lr_decay_epochs:
     value: 10
@@ -59,4 +59,4 @@ parameters:
   seed:
     values: [42, 1337, 7, 13, 999, 752, 56789, 145790, 11, 306050]
 
-# total of 10*2=20 runs
+# total of 10*1=10 runs
