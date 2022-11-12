@@ -10,11 +10,13 @@ from meta_learning.vampire._utils import train_val_split
 class VampireMetaLearner(BaseMetaLearner):
     def __init__(self, per_task_lr, meta_lr, kl_weight, f_loss, train_adapt_steps, test_adapt_steps,
                  meta_batch_size,
-                 device, seed, n_ways, k_shots, num_models, data_loader=None, dataset_name=None):
+                 device, seed, n_ways, k_shots, num_models, num_models_test,
+                 step_epochs, scheduler,
+                 data_loader=None, dataset_name=None):
         self.train_adapt_steps = train_adapt_steps
         config = {
             'resume_epoch': 0,
-            'logdir': "artifacts/vampire" if not dataset_name else f"artifacts/{dataset_name}/vampire",
+            'logdir': "artifacts/vampire" if not dataset_name else f"artifacts/{dataset_name}/vampire/{seed}",
             'minibatch_print': -1,  # !
             'num_episodes_per_epoch': meta_batch_size,  # number of meta updates per epoch
             'train_val_split_function': train_val_split,
@@ -29,7 +31,7 @@ class VampireMetaLearner(BaseMetaLearner):
             'num_models': num_models,  # MC samples
             'loss_function': f_loss,
             'KL_weight': kl_weight,
-            'first_order': False,
+            'first_order': True,
             'inner_lr': per_task_lr,
             'meta_lr': meta_lr,
 
@@ -37,22 +39,26 @@ class VampireMetaLearner(BaseMetaLearner):
             'num_ways': n_ways,
             'batchnorm': True,
             'strided': True,
+
+            'scheduler': scheduler,
+            'step_epochs': step_epochs
         }
         self.vampire = Vampire2(config)
         self.epoch = 0
         self.loss = f_loss
         self.device = device
         self.data_loader = data_loader
+        self.num_models_test = num_models_test
 
     def meta_train(self, train_taskset, validation_taskset, n_epochs):
         self.data_loader = train_taskset
         self.vampire.config['num_epochs'] = n_epochs
         self.vampire.config['num_inner_updates'] = self.train_adapt_steps
         self.vampire.train(train_dataloader=train_taskset, val_dataloader=validation_taskset)
-        # where's the stuff?
 
     def meta_test_on_task(self, D_task_xs_adapt, D_task_ys_adapt, D_task_xs_error_eval, D_task_ys_error_eval, n_epochs):
         self.vampire.config['num_inner_updates'] = n_epochs
+        self.vampire.config['num_models'] = self.num_models_test
         self.vampire.config['train_flag'] = False
         model = self.vampire.load_model(resume_epoch=self.vampire.config["num_epochs"],
                                         hyper_net_class=self.vampire.hyper_net_class,

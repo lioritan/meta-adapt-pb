@@ -199,6 +199,9 @@ class MLBaseClass(object):
                         model["optimizer"].step()
                         model["optimizer"].zero_grad()
 
+                        if "scheduler" in model:  # new code
+                            model["scheduler"].step()
+
                         # monitoring
                         if (eps_count + 1) % self.config['minibatch_print'] == 0:
                             loss_monitor = loss_monitor * self.config["minibatch"] / self.config["minibatch_print"]

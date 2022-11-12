@@ -75,10 +75,13 @@ def get_algorithm_by_name(algorithm_name, args, dataset):
     elif algorithm_name == "vampire":
         kl_weight = args.vampire_kl_weight
         num_models = args.vampire_num_models
+        num_models_test = args.vampire_num_models_test
         data_loader = get_dataset_by_name(args.dataset, args).train_taskset(args.n_ways, args.n_shots)
         return VampireMetaLearner(args.per_task_lr, args.meta_lr, kl_weight, loss, args.train_adapt_steps,
                                   args.test_adapt_steps, args.meta_batch_size, device, args.seed, args.n_ways,
-                                  args.n_shots, num_models, data_loader=data_loader, dataset_name=args.dataset)
+                                  args.n_shots, num_models, num_models_test,
+                                  args.optimizer_lr_decay_epochs, args.optimizer_lr_schedule_type,
+                                  data_loader=data_loader, dataset_name=args.dataset)
     elif algorithm_name == "bmaml":
         num_models = args.bmaml_num_particles
         data_loader = get_dataset_by_name(args.dataset, args).train_taskset(args.n_ways, args.n_shots)

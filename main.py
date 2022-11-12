@@ -45,6 +45,8 @@ def get_parser():
                         help="Relative KL weight")
     parser.add_argument('--vampire_num_models', default=3, type=int,
                         help="number of models/MC averages for vampire")
+    parser.add_argument('--vampire_num_models_test', default=3, type=int,
+                        help="number of models/MC averages for vampire test")
     parser.add_argument('--bmaml_num_particles', default=3, type=int,
                         help="number of particles for Bmaml (SVGD models)")
     parser.add_argument('--mnist_pixels_to_permute_train', default=0, type=int,

@@ -88,6 +88,11 @@ class Maml(MLBaseClass):
         # optimizer
         model["optimizer"] = torch.optim.Adam(params=model["hyper_net"].parameters(), lr=self.config['meta_lr'])
 
+        # new code
+        if "scheduler" in self.config:
+            if self.config["scheduler"] == "step":
+                model["scheduler"] = torch.optim.lr_scheduler.StepLR(model["optimizer"], self.config["step_epochs"], 0.99)
+
         # load model if there is saved file
         if resume_epoch > 0:
             # path to the saved file
