@@ -2,6 +2,11 @@ program: ./main.py
 method: grid
 name: averaged-sweep
 project: meta-pb-omni-vampire
+command:
+  - ${env}
+  - python3
+  - ${program}
+  - ${args}
 parameters:
   dataset:
     value: "omniglot"
@@ -42,7 +47,7 @@ parameters:
   optimizer_lr_decay_epochs: # taken from the paper
     value: 10000
 
-    optimizer_lr_schedule_type: # taken from the paper
+  optimizer_lr_schedule_type: # taken from the paper
       values: [ "step" ]
 
   test_set_mult:
