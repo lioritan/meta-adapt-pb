@@ -16,7 +16,7 @@ class VampireMetaLearner(BaseMetaLearner):
         self.train_adapt_steps = train_adapt_steps
         config = {
             'resume_epoch': 0,
-            'logdir': "artifacts/vampire" if not dataset_name else f"artifacts/{dataset_name}/vampire/{seed}",
+            'logdir': "artifacts/vampire" if not dataset_name else f"artifacts/{dataset_name}/vampire/{k_shots}/{seed}",
             'minibatch_print': -1,  # !
             'num_episodes_per_epoch': meta_batch_size,  # number of meta updates per epoch
             'train_val_split_function': train_val_split,
