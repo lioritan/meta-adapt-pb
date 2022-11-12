@@ -1,7 +1,7 @@
 program: ./main.py
 method: grid
 name: averaged-sweep
-project: meta-pb-omni-maml
+project: meta-pb-omni-vampire
 parameters:
   dataset:
     value: "omniglot"
