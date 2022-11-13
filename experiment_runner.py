@@ -29,8 +29,8 @@ class ExperimentRunner(object):
                 #TODO: report
 
     def run_experiment(self, algorithm: BaseMetaLearner, dataset: BaseDatasetLoader, seed):
-        model_name = f"artifacts/{dataset.get_name()}/{str(algorithm.__class__.__name__)}.pkl"
-        os.makedirs(f"artifacts/{dataset.get_name()}", exist_ok=True)
+        model_name = f"artifacts/{dataset.get_name()}/{seed}/{str(algorithm.__class__.__name__)}.pkl"
+        os.makedirs(f"artifacts/{dataset.get_name()}/{seed}", exist_ok=True)
         if self.load_trained:
             print(f"load trained model")
             algorithm.load_saved_model(model_name=model_name)

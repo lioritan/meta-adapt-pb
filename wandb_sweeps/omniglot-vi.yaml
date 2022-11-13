@@ -1,0 +1,65 @@
+program: ./main.py
+method: grid
+name: averaged-sweep
+project: meta-pb-omni-vi
+command:
+  - ${env}
+  - python3
+  - ${program}
+  - ${args}
+parameters:
+  dataset:
+    value: "omniglot"
+
+  algorithm:
+    value: "bayesian-vi"
+
+  n_ways:
+    value: 5
+
+  n_shots:
+    values: [1, 5]
+
+  per_task_lr:
+    values: [0.1]
+
+  meta_lr:
+    values: [1e-3]
+
+  train_adapt_steps: # taken from the paper
+    values: [10, 50, 100]
+
+  train_sample_size:
+    value: 5
+
+  meta_batch_size: # taken from the paper
+    value: 32
+
+  n_epochs:
+    value: 60000
+
+  test_adapt_steps: # taken from the paper
+      values: [50, 100, 200]
+
+  optimizer_weight_decay: # taken from the paper
+      values: [0, 1e-4, 1e-3]
+
+  optimizer_lr_decay_epochs: # taken from the paper
+    value: 10000
+
+  optimizer_lr_schedule_type: # taken from the paper
+      values: ["no_change", "step" ]
+
+  test_set_mult:
+    value: 2
+
+  vi_hyper_kl_test_factor:
+    values: [0, 1e-6, 1e-3, 1]
+
+  early_stop:
+    value: True
+
+  seed:
+    values: [42, 1337, 7, 13, 999, 752, 56789, 145790, 11, 306050]
+
+# total of 10*2*4*2*3*3*3=4320 runs

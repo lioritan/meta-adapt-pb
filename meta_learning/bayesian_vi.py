@@ -1,7 +1,7 @@
-
 # standard stochastic meta-training and testing, optionally add low norm (uncertainty) to testing
 
 import math
+import os
 
 from meta_learning.base_meta_learner import BaseMetaLearner
 import torch
@@ -24,7 +24,8 @@ class BayesianVI(BaseMetaLearner):
                  f_loss, device, seed, n_ways,
                  stochastic_model,
                  model_ctor,
-                 shots_mult):
+                 shots_mult, optimizer_weight_decay,
+                 lr_decay_epochs, lr_schedule_type, early_stop, test_penalty=0):
         self.model_ctor = model_ctor
         self.shots_mult = shots_mult
         self.stochastic_model = stochastic_model.to(device)
@@ -38,7 +39,13 @@ class BayesianVI(BaseMetaLearner):
         self.meta_lr = meta_lr
         self.per_task_lr = per_task_lr
         self.optimizer = torch.optim.Adam
-        self.opt_params = {"lr": meta_lr}
+        self.opt_params = {"lr": meta_lr, "weight_decay": optimizer_weight_decay}
+
+        self.early_stop = early_stop
+        self.lr_decay_epochs = lr_decay_epochs
+        self.lr_schedule_type = lr_schedule_type
+
+        self.test_penalty = test_penalty  # special parameter for comparison
 
     @classmethod
     def run_eval_max_posterior(cls, model, batch, loss):
@@ -72,8 +79,11 @@ class BayesianVI(BaseMetaLearner):
         return avg_empiric_loss, complexity
 
     def meta_train(self, train_taskset, validation_taskset, n_epochs):
+        lowest_loss = torch.inf
+        count = 0
+        patience = 50
+
         for epoch in range(n_epochs):
-            print(epoch)
             self.stochastic_model.train()
             # make posterior models
             posterior_models = [clone_model(self.stochastic_model, self.model_ctor, self.device)
@@ -98,12 +108,47 @@ class BayesianVI(BaseMetaLearner):
                 optimizer.zero_grad()
                 pb_objective.backward()
                 optimizer.step()
-        # TODO: use validation set
+
+            if not self.early_stop:
+                if self.lr_schedule_type == 'step' and epoch % self.lr_decay_epochs == 0:
+                    self.opt_params["lr"] *= 0.9
+                continue
+            # early stopping
+            val_loss = torch.tensor(self.get_validation_loss(validation_taskset))
+            if val_loss <= lowest_loss - 1e-3:
+                lowest_loss = val_loss
+                count = 0
+                os.makedirs("artifacts/tmp/bayes_vi", exist_ok=True)
+                self.save_model(f"artifacts/tmp/bayes_vi/model{self.seed}.pkl")
+            else:
+                count += 1
+                if count >= patience:
+                    print(f"early stop condition met, epoch: {epoch}, {val_loss.item()}, {lowest_loss.item()}")
+                    if epoch < (n_epochs // 10):
+                        count = 0
+                        continue
+                    else:
+                        self.load_saved_model(f"artifacts/tmp/maml/model{self.seed}.pkl")
+                        os.remove(f"artifacts/tmp/maml/model{self.seed}.pkl")
+                        break
+            if self.lr_schedule_type == 'step' and epoch % self.lr_decay_epochs == 0:
+                self.opt_params["lr"] *= 0.9
+        # TODO: use validation set for tuning
+
+    def get_validation_loss(self, validation_taskset):
+        batch = validation_taskset.sample()
+        D_task_xs_adapt, D_task_xs_error_eval, D_task_ys_adapt, D_task_ys_error_eval = self.split_adapt_eval(batch)
+        evaluation_error, evaluation_accuracy, _, _ = \
+            self.meta_test_on_task(D_task_xs_adapt, D_task_ys_adapt, D_task_xs_error_eval, D_task_ys_error_eval,
+                                   n_epochs=self.test_adapt_steps)
+        del D_task_xs_adapt, D_task_xs_error_eval, D_task_ys_adapt, D_task_ys_error_eval
+        torch.cuda.empty_cache()
+        return evaluation_error
 
     def calculate_pb_bound(self, D_task_xs_adapt, D_task_ys_adapt, delta=0.1):
         trn_error, trn_acc = BayesianVI.run_eval_max_posterior(self.stochastic_model,
-                                                                   (D_task_xs_adapt, D_task_ys_adapt),
-                                                                   self.f_loss)
+                                                               (D_task_xs_adapt, D_task_ys_adapt),
+                                                               self.f_loss)
         m = len(D_task_ys_adapt)
         complexity_term = math.sqrt((math.log(2 * m / delta)) / (2 * m - 1))
         acc_bound = trn_acc - complexity_term
@@ -118,16 +163,18 @@ class BayesianVI(BaseMetaLearner):
         for step in range(self.test_adapt_steps):
             loss, complexity = self.get_pb_terms_single_task(D_task_xs_adapt, D_task_ys_adapt,
                                                              prior, self.stochastic_model)
-            pb_objective = loss + complexity
+            hyper_dvrg = get_hyper_divergnce(var_prior=1e2, var_posterior=1e-3,
+                                            prior_model=self.stochastic_model, device=self.device)
+            pb_objective = loss + complexity + self.test_penalty * hyper_dvrg
             optimizer.zero_grad()
             pb_objective.backward()
             optimizer.step()
 
         self.stochastic_model.eval()
         evaluation_error, evaluation_accuracy = BayesianVI.run_eval_max_posterior(self.stochastic_model,
-                                                                                      (D_task_xs_error_eval,
-                                                                                       D_task_ys_error_eval),
-                                                                                      self.f_loss)
+                                                                                  (D_task_xs_error_eval,
+                                                                                   D_task_ys_error_eval),
+                                                                                  self.f_loss)
 
         err_bound, acc_bound = self.calculate_pb_bound(D_task_xs_adapt, D_task_ys_adapt)
         return evaluation_error.item(), evaluation_accuracy.item(), err_bound.item(), acc_bound.item()
