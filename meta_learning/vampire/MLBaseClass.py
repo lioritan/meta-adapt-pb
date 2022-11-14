@@ -147,6 +147,10 @@ class MLBaseClass(object):
         model = self.load_model(resume_epoch=self.config['resume_epoch'], hyper_net_class=self.hyper_net_class,
                                 eps_dataloader=train_dataloader)
         model["optimizer"].zero_grad()
+        best_val_loss = torch.inf  # new code
+        best_epoch = 0
+        patience = 50
+        count = 0
 
         # initialize a tensorboard summary writer for logging
         tb_writer = SummaryWriter(
@@ -234,6 +238,26 @@ class MLBaseClass(object):
                                                      global_step=global_step)
 
                                 model["f_base_net"].train()
+
+                                # TODO: early stopping
+                                if loss_temp < best_val_loss:
+                                    count = 0
+                                    best_epoch = epoch_id
+                                    best_val_loss = loss_temp.copy()
+                                else:
+                                    count += 1
+                                    if count >= patience:
+                                        print(
+                                            f"early stop condition met, epoch: {epoch_id}, {loss_temp.item()}, {best_val_loss.item()}")
+                                        if epoch_id < (self.config['num_epochs'] // 10):
+                                            count = 0
+                                            continue
+                                        else:
+                                            for i in range(best_epoch +1, epoch_id):
+                                                partial = os.path.join(self.config['logdir'], f'Epoch_{i:d}.pt')
+                                                os.remove(partial)
+                                            return
+
                                 del loss_temp
                                 del accuracy_temp
 
