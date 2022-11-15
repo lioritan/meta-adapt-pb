@@ -128,8 +128,8 @@ class BayesianVI(BaseMetaLearner):
                         count = 0
                         continue
                     else:
-                        self.load_saved_model(f"artifacts/tmp/maml/model{self.seed}.pkl")
-                        os.remove(f"artifacts/tmp/maml/model{self.seed}.pkl")
+                        self.load_saved_model(f"artifacts/tmp/bayes_vi/model{self.seed}.pkl")
+                        os.remove(f"artifacts/tmp/bayes_vi/model{self.seed}.pkl")
                         break
             if self.lr_schedule_type == 'step' and epoch % self.lr_decay_epochs == 0:
                 self.opt_params["lr"] *= 0.9

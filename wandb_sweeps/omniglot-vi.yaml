@@ -26,7 +26,7 @@ parameters:
   meta_lr:
     values: [1e-3]
 
-  train_adapt_steps: # taken from the paper
+  train_adapt_steps:
     values: [10, 50, 100]
 
   train_sample_size:
@@ -36,18 +36,18 @@ parameters:
     value: 32
 
   n_epochs:
-    value: 60000
+    value: 5000
 
-  test_adapt_steps: # taken from the paper
+  test_adapt_steps:
       values: [50, 100, 200]
 
-  optimizer_weight_decay: # taken from the paper
+  optimizer_weight_decay:
       values: [0, 1e-4, 1e-3]
 
-  optimizer_lr_decay_epochs: # taken from the paper
-    value: 10000
+  optimizer_lr_decay_epochs:
+    value: 1000
 
-  optimizer_lr_schedule_type: # taken from the paper
+  optimizer_lr_schedule_type: 
       values: ["no_change", "step" ]
 
   test_set_mult:
