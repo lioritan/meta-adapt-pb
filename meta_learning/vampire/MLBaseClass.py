@@ -147,7 +147,7 @@ class MLBaseClass(object):
         model = self.load_model(resume_epoch=self.config['resume_epoch'], hyper_net_class=self.hyper_net_class,
                                 eps_dataloader=train_dataloader)
         model["optimizer"].zero_grad()
-        best_val_loss = torch.inf  # new code
+        best_val_loss = np.inf  # new code
         best_epoch = 0
         patience = 50
         count = 0
@@ -240,15 +240,15 @@ class MLBaseClass(object):
                                 model["f_base_net"].train()
 
                                 # TODO: early stopping
-                                if loss_temp < best_val_loss:
+                                if np.mean(loss_temp) < best_val_loss:
                                     count = 0
                                     best_epoch = epoch_id
-                                    best_val_loss = loss_temp.copy()
+                                    best_val_loss = np.mean(loss_temp)
                                 else:
                                     count += 1
                                     if count >= patience:
                                         print(
-                                            f"early stop condition met, epoch: {epoch_id}, {loss_temp.item()}, {best_val_loss.item()}")
+                                            f"early stop condition met, epoch: {epoch_id}, {np.mean(loss_temp)}, {best_val_loss}")
                                         if epoch_id < (self.config['num_epochs'] // 10):
                                             count = 0
                                             continue
