@@ -60,6 +60,7 @@ class VampireMetaLearner(BaseMetaLearner):
         self.vampire.config['num_inner_updates'] = n_epochs
         self.vampire.config['num_models'] = self.num_models_test
         self.vampire.config['train_flag'] = False
+        self.load_saved_model(None) # for early stopping
         model = self.vampire.load_model(resume_epoch=self.vampire.config["num_epochs"],
                                         hyper_net_class=self.vampire.hyper_net_class,
                                         eps_dataloader=self.data_loader)

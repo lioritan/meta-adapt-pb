@@ -253,7 +253,7 @@ class MLBaseClass(object):
                                             count = 0
                                             continue
                                         else:
-                                            for i in range(best_epoch +1, epoch_id):
+                                            for i in range(best_epoch +1, epoch_id + 1):
                                                 partial = os.path.join(self.config['logdir'], f'Epoch_{i:d}.pt')
                                                 os.remove(partial)
                                             return
@@ -269,12 +269,6 @@ class MLBaseClass(object):
                 checkpoint_path = os.path.join(self.config['logdir'], 'Epoch_{0:d}.pt'.format(epoch_id + 1))
                 torch.save(obj=checkpoint, f=checkpoint_path)
                 print('State dictionaries are saved into {0:s}\n'.format(checkpoint_path))
-                # new code, delete every 1000 epochs
-                if (epoch_id+1) % 1000 == 0:
-                    for i in range(epoch_id - 998, epoch_id + 1):
-                        partial = os.path.join(self.config['logdir'], f'Epoch_{i:d}.pt')
-                        os.remove(partial)
-
 
             print('Training is completed.')
         finally:
