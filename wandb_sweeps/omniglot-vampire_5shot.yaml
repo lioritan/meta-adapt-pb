@@ -18,7 +18,7 @@ parameters:
     value: 5
 
   n_shots:
-    values: [1, 5]
+    values: [5]
 
   per_task_lr: # taken from the paper
     values: [0.1]
@@ -30,7 +30,7 @@ parameters:
     value: 5
 
   train_sample_size:
-    value: 5
+    value: 10
 
   meta_batch_size: # taken from the paper
     value: 32
@@ -65,4 +65,4 @@ parameters:
   seed:
     values: [42, 1337, 7, 13, 999, 752, 56789, 145790, 11, 306050]
 
-# total of 10*2=20 runs
+# total of 10 runs
