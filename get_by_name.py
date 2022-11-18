@@ -50,7 +50,7 @@ def get_free_gpu():
 def get_algorithm_by_name(algorithm_name, args, dataset):
     loss = nn.CrossEntropyLoss(reduction='mean')
     device = torch.device(get_free_gpu())
-    args_hash = hash(args)
+    args_hash = hash(str(args))
     if algorithm_name == "train-on-test":
         return TrainOnTestLearner(args.per_task_lr, args.test_set_mult, loss,
                                   device, args.seed, args.n_ways, dataset.get_deterministic_model(),
