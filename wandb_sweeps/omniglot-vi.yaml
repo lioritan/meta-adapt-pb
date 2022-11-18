@@ -45,16 +45,16 @@ parameters:
       values: [0, 1e-4, 1e-3]
 
   optimizer_lr_decay_epochs:
-    value: 1000
+    value: 0
 
   optimizer_lr_schedule_type: 
-      values: ["no_change", "step" ]
+      values: ["no_change"]
 
   test_set_mult:
     value: 2
 
   vi_hyper_kl_test_factor:
-    values: [0, 1e-6, 1e-3, 1]
+    values: [0, 1]
 
   early_stop:
     value: True
@@ -62,4 +62,4 @@ parameters:
   seed:
     values: [42, 1337, 7, 13, 999, 752, 56789, 145790, 11, 306050]
 
-# total of 10*2*4*2*3*3*3=4320 runs
+# total of 10*2*2*3*3*3=1080 runs

@@ -25,7 +25,7 @@ class BayesianVI(BaseMetaLearner):
                  stochastic_model,
                  model_ctor,
                  shots_mult, optimizer_weight_decay,
-                 lr_decay_epochs, lr_schedule_type, early_stop, test_penalty=0):
+                 lr_decay_epochs, lr_schedule_type, early_stop, args_hash, test_penalty=0):
         self.model_ctor = model_ctor
         self.shots_mult = shots_mult
         self.stochastic_model = stochastic_model.to(device)
@@ -46,6 +46,7 @@ class BayesianVI(BaseMetaLearner):
         self.lr_schedule_type = lr_schedule_type
 
         self.test_penalty = test_penalty  # special parameter for comparison
+        self.args_hash = args_hash
 
     @classmethod
     def run_eval_max_posterior(cls, model, batch, loss):
@@ -119,7 +120,7 @@ class BayesianVI(BaseMetaLearner):
                 lowest_loss = val_loss
                 count = 0
                 os.makedirs("artifacts/tmp/bayes_vi", exist_ok=True)
-                self.save_model(f"artifacts/tmp/bayes_vi/model{self.seed}.pkl")
+                self.save_model(f"artifacts/tmp/bayes_vi/model{self.args_hash}.pkl")
             else:
                 count += 1
                 if count >= patience:
@@ -128,8 +129,8 @@ class BayesianVI(BaseMetaLearner):
                         count = 0
                         continue
                     else:
-                        self.load_saved_model(f"artifacts/tmp/bayes_vi/model{self.seed}.pkl")
-                        os.remove(f"artifacts/tmp/bayes_vi/model{self.seed}.pkl")
+                        self.load_saved_model(f"artifacts/tmp/bayes_vi/model{self.args_hash}.pkl")
+                        os.remove(f"artifacts/tmp/bayes_vi/model{self.args_hash}.pkl")
                         break
             if self.lr_schedule_type == 'step' and epoch % self.lr_decay_epochs == 0:
                 self.opt_params["lr"] *= 0.9

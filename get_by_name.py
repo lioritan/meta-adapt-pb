@@ -50,6 +50,7 @@ def get_free_gpu():
 def get_algorithm_by_name(algorithm_name, args, dataset):
     loss = nn.CrossEntropyLoss(reduction='mean')
     device = torch.device(get_free_gpu())
+    args_hash = hash(args)
     if algorithm_name == "train-on-test":
         return TrainOnTestLearner(args.per_task_lr, args.test_set_mult, loss,
                                   device, args.seed, args.n_ways, dataset.get_deterministic_model(),
@@ -66,7 +67,7 @@ def get_algorithm_by_name(algorithm_name, args, dataset):
                           loss, device, args.seed, args.n_ways, dataset.get_stochastic_model(),
                           lambda x: dataset.get_stochastic_model(),
                           args.test_set_mult, args.optimizer_weight_decay, args.optimizer_lr_decay_epochs,
-                               args.optimizer_lr_schedule_type, args.early_stop, args.vi_hyper_kl_test_factor)
+                               args.optimizer_lr_schedule_type, args.early_stop, args_hash, args.vi_hyper_kl_test_factor)
     elif algorithm_name == "meta-adaptation":
         return MetaAdaptation(args.per_task_lr, args.meta_lr, args.train_adapt_steps, args.test_adapt_steps,
                               args.meta_batch_size,
