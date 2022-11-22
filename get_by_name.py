@@ -73,7 +73,9 @@ def get_algorithm_by_name(algorithm_name, args, dataset):
                               args.meta_batch_size,
                               loss, device, args.seed, args.n_ways, dataset.get_stochastic_model(),
                               lambda x: dataset.get_stochastic_model(),
-                              args.test_set_mult, args.meta_adaptation_is_adaptive)
+                              args.test_set_mult, args.meta_adaption_adaptive_kl_factor, args.meta_adaptation_hyper_kl_factor,
+                              args.optimizer_weight_decay, args.optimizer_lr_decay_epochs,
+                              args.optimizer_lr_schedule_type, args.early_stop, args_hash)
     elif algorithm_name == "vampire":
         kl_weight = args.vampire_kl_weight
         num_models = args.vampire_num_models

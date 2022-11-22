@@ -39,10 +39,12 @@ def get_parser():
                         help="relative size of evaluation vs adaptation test sets")
 
     # Note: boolean values don't work in argparse, so if this is set it is always true
-    parser.add_argument('--meta_adaptation_is_adaptive', default=False, type=bool,
-                        help="KL adapts during run or not")
+    parser.add_argument('--meta_adaption_adaptive_kl_factor', default=0, type=float,
+                        help="Hyper KL factor in meta-testing vs adaptive prior")
+    parser.add_argument('--meta_adaptation_hyper_kl_factor', default=0, type=float,
+                        help="Hyper KL factor in meta-testing vs const prior")
     parser.add_argument('--vi_hyper_kl_test_factor', type=float, default=0,
-                        help="Multiplicative weight of hyper-kl in meta-testing for vi/meta-adaptation")
+                        help="Multiplicative weight of hyper-kl in meta-testing for vi")
     parser.add_argument('--vampire_kl_weight', default=1e-6, type=float,
                         help="Relative KL weight")
     parser.add_argument('--vampire_num_models', default=3, type=int,

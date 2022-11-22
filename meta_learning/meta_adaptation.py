@@ -1,4 +1,5 @@
 import math
+import os
 
 from meta_learning.base_meta_learner import BaseMetaLearner
 import torch
@@ -22,7 +23,8 @@ class MetaAdaptation(BaseMetaLearner):
                  stochastic_model,
                  model_ctor,
                  shots_mult,
-                 adaptive):
+                 adaptive_factor, hyper_kl_factor, optimizer_weight_decay,
+                 lr_decay_epochs, lr_schedule_type, early_stop, args_hash):
         self.model_ctor = model_ctor
         self.shots_mult = shots_mult
         self.stochastic_model = stochastic_model.to(device)
@@ -36,10 +38,15 @@ class MetaAdaptation(BaseMetaLearner):
         self.meta_lr = meta_lr
         self.per_task_lr = per_task_lr
         self.optimizer = torch.optim.Adam
-        self.opt_params = {"lr": meta_lr}
+        self.opt_params = {"lr": meta_lr, "weight_decay": optimizer_weight_decay}
 
-        self.is_adaptive_prior = adaptive
-        self.use_training_prior = adaptive
+        self.early_stop = early_stop
+        self.lr_decay_epochs = lr_decay_epochs
+        self.lr_schedule_type = lr_schedule_type
+        self.args_hash = args_hash
+
+        self.adaptive_factor = adaptive_factor
+        self.hyper_kl_factor = hyper_kl_factor
         self.analyze_layer_variance = False
 
     @classmethod
@@ -74,8 +81,11 @@ class MetaAdaptation(BaseMetaLearner):
         return avg_empiric_loss, complexity
 
     def meta_train(self, train_taskset, validation_taskset, n_epochs):
+        lowest_loss = torch.inf
+        count = 0
+        patience = 50
+
         for epoch in range(n_epochs):
-            print(epoch)
             self.stochastic_model.train()
             # make posterior models
             posterior_models = [clone_model(self.stochastic_model, self.model_ctor, self.device)
@@ -100,7 +110,42 @@ class MetaAdaptation(BaseMetaLearner):
                 optimizer.zero_grad()
                 pb_objective.backward()
                 optimizer.step()
+
+            if not self.early_stop:
+                if self.lr_schedule_type == 'step' and epoch % self.lr_decay_epochs == 0:
+                    self.opt_params["lr"] *= 0.9
+                continue
+            # early stopping
+            val_loss = torch.tensor(self.get_validation_loss(validation_taskset))
+            if val_loss <= lowest_loss - 1e-3:
+                lowest_loss = val_loss
+                count = 0
+                os.makedirs("artifacts/tmp/meta_adapt", exist_ok=True)
+                self.save_model(f"artifacts/tmp/meta_adapt/model{self.args_hash}.pkl")
+            else:
+                count += 1
+                if count >= patience:
+                    print(f"early stop condition met, epoch: {epoch}, {val_loss.item()}, {lowest_loss.item()}")
+                    if epoch < (n_epochs // 10):
+                        count = 0
+                        continue
+                    else:
+                        self.load_saved_model(f"artifacts/tmp/meta_adapt/model{self.args_hash}.pkl")
+                        os.remove(f"artifacts/tmp/meta_adapt/model{self.args_hash}.pkl")
+                        break
+            if self.lr_schedule_type == 'step' and epoch % self.lr_decay_epochs == 0:
+                self.opt_params["lr"] *= 0.9
         # TODO: use validation set
+
+    def get_validation_loss(self, validation_taskset):
+        batch = validation_taskset.sample()
+        D_task_xs_adapt, D_task_xs_error_eval, D_task_ys_adapt, D_task_ys_error_eval = self.split_adapt_eval(batch)
+        evaluation_error, evaluation_accuracy, _, _ = \
+            self.meta_test_on_task(D_task_xs_adapt, D_task_ys_adapt, D_task_xs_error_eval, D_task_ys_error_eval,
+                                   n_epochs=self.test_adapt_steps)
+        del D_task_xs_adapt, D_task_xs_error_eval, D_task_ys_adapt, D_task_ys_error_eval
+        torch.cuda.empty_cache()
+        return evaluation_error
 
     def get_pb_objective(self, x_data, y_data, hyper_dvrg, meta_complex_term, posterior_models):
         losses = torch.zeros(self.meta_batch_size, device=self.device)
@@ -123,11 +168,10 @@ class MetaAdaptation(BaseMetaLearner):
         trn_error, trn_acc = MetaAdaptation.run_eval_max_posterior(self.stochastic_model,
                                                                    (D_task_xs_adapt, D_task_ys_adapt),
                                                                    self.f_loss)
-        if self.use_training_prior:
-            hyper_kl = get_net_densities_divergence(orig_hyper_prior, self.stochastic_model, prm=1e-3)
-        else:
-            hyper_kl = get_hyper_divergnce(var_prior=1e2, var_posterior=1e-3,
+        hyper_kl_adaptive = get_net_densities_divergence(orig_hyper_prior, self.stochastic_model, prm=1e-3)
+        hyper_kl_const = get_hyper_divergnce(var_prior=1e2, var_posterior=1e-3,
                                            prior_model=self.stochastic_model, device=self.device)
+        hyper_kl = hyper_kl_adaptive * self.adaptive_factor + hyper_kl_const * self.hyper_kl_factor
         m = len(D_task_ys_adapt)
         complexity_term = torch.sqrt((hyper_kl - math.log(2 * m / delta)) / (2 * m - 1))
         acc_bound = trn_acc - complexity_term
@@ -145,8 +189,7 @@ class MetaAdaptation(BaseMetaLearner):
 
         for epoch in range(n_epochs):
             # Hyper-KL from hyper-prior, each loop (data-dependent)
-            if self.is_adaptive_prior:
-                base_hyper_prior = clone_model(self.stochastic_model, self.model_ctor, self.device)
+            base_hyper_prior = clone_model(self.stochastic_model, self.model_ctor, self.device)
             # make posterior models
             posterior_models = [clone_model(self.stochastic_model, self.model_ctor, self.device)
                                 for i in range(self.meta_batch_size)]
@@ -155,11 +198,10 @@ class MetaAdaptation(BaseMetaLearner):
             all_params = all_post_param + prior_params
             optimizer = self.optimizer(all_params, **self.opt_params)
             for step in range(self.train_adapt_steps):
-                if self.use_training_prior:
-                    hyper_dvrg = get_net_densities_divergence(base_hyper_prior, self.stochastic_model, prm=1e-3)
-                else:  # low norm
-                    hyper_dvrg = get_hyper_divergnce(var_prior=1e2, var_posterior=1e-3,
+                hyper_kl_adaptive = get_net_densities_divergence(base_hyper_prior, self.stochastic_model, prm=1e-3)
+                hyper_kl_const = get_hyper_divergnce(var_prior=1e2, var_posterior=1e-3,
                                                      prior_model=self.stochastic_model, device=self.device)
+                hyper_dvrg = hyper_kl_adaptive * self.adaptive_factor + hyper_kl_const * self.hyper_kl_factor
                 meta_complex_term = get_meta_complexity_term(hyper_dvrg, delta=0.1, n_train_tasks=self.meta_batch_size)
                 pb_objective = self.get_pb_objective(D_task_xs_adapt, D_task_ys_adapt, hyper_dvrg,
                                                      meta_complex_term, posterior_models)
