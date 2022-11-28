@@ -84,6 +84,7 @@ class MetaAdaptation(BaseMetaLearner):
         lowest_loss = torch.inf
         count = 0
         patience = 50
+        iters_per_validation = 10
 
         for epoch in range(n_epochs):
             self.stochastic_model.train()
@@ -111,7 +112,7 @@ class MetaAdaptation(BaseMetaLearner):
                 pb_objective.backward()
                 optimizer.step()
 
-            if not self.early_stop:
+            if not self.early_stop or (epoch % iters_per_validation != 0):
                 if self.lr_schedule_type == 'step' and epoch % self.lr_decay_epochs == 0:
                     self.opt_params["lr"] *= 0.9
                 continue
@@ -123,7 +124,7 @@ class MetaAdaptation(BaseMetaLearner):
                 os.makedirs("artifacts/tmp/meta_adapt", exist_ok=True)
                 self.save_model(f"artifacts/tmp/meta_adapt/model{self.args_hash}.pkl")
             else:
-                count += 1
+                count += iters_per_validation
                 if count >= patience:
                     print(f"early stop condition met, epoch: {epoch}, {val_loss.item()}, {lowest_loss.item()}")
                     if epoch < (n_epochs // 10):
