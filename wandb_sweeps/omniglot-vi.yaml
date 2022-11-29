@@ -39,10 +39,10 @@ parameters:
     value: 5000
 
   test_adapt_steps:
-      values: [50, 100, 200]
+      values: [200]
 
   optimizer_weight_decay:
-      values: [0, 1e-4, 1e-3]
+      values: [0, 1e-4]
 
   optimizer_lr_decay_epochs:
     value: 0
@@ -60,6 +60,8 @@ parameters:
     value: True
 
   seed:
-    values: [42, 1337, 7, 13, 999, 752, 56789, 145790, 11, 306050]
+    values: [ 42, 1337, 13 ]
+    #values: [42, 1337, 7, 13, 999, 752, 56789, 145790, 11, 306050]
 
+# total of 3*2*2*2*3 = 72
 # total of 10*2*2*3*3*3=1080 runs
