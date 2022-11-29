@@ -111,7 +111,7 @@ class BayesianVI(BaseMetaLearner):
                 pb_objective.backward()
                 optimizer.step()
 
-            if not self.early_stop (epoch % iters_per_validation != 0):
+            if not self.early_stop or (epoch % iters_per_validation != 0):
                 if self.lr_schedule_type == 'step' and epoch % self.lr_decay_epochs == 0:
                     self.opt_params["lr"] *= 0.9
                 continue
