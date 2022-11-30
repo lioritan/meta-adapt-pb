@@ -41,6 +41,9 @@ parameters:
   test_adapt_steps:
       values: [200]
 
+  n_test_epochs:
+    values: [1, 10, 100]
+
   optimizer_weight_decay:
       values: [0, 1e-4]
 
@@ -66,5 +69,5 @@ parameters:
     values: [42, 1337, 13]
     #values: [42, 1337, 7, 13, 999, 752, 56789, 145790, 11, 306050]
 
-#total of 3*2*2*2*3 = 72
+#total of 3*2*2*2*3*3 = 216
 # total of 10*2*2*3*3*3*2=2160 runs

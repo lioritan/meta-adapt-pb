@@ -177,6 +177,7 @@ class MetaAdaptation(BaseMetaLearner):
         complexity_term = torch.sqrt((hyper_kl - math.log(2 * m / delta)) / (2 * m - 1))
         acc_bound = trn_acc - complexity_term
         err_bound = trn_error + complexity_term
+        print(complexity_term, m, hyper_kl_adaptive, hyper_kl_const, delta)
         return err_bound, acc_bound
 
     def meta_test_on_task(self, D_task_xs_adapt, D_task_ys_adapt, D_task_xs_error_eval, D_task_ys_error_eval, n_epochs):
