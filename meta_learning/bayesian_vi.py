@@ -94,6 +94,7 @@ class BayesianVI(BaseMetaLearner):
             prior_params = list(self.stochastic_model.parameters())
             all_params = all_post_param + prior_params
             optimizer = self.optimizer(all_params, **self.opt_params)
+            data_batch = [train_taskset.sample() for i in range(self.meta_batch_size)]
             for step in range(self.train_adapt_steps):
                 hyper_dvrg = get_hyper_divergnce(var_prior=1e2, var_posterior=1e-3, prior_model=self.stochastic_model,
                                                  device=self.device)
@@ -101,9 +102,8 @@ class BayesianVI(BaseMetaLearner):
                 losses = torch.zeros(self.meta_batch_size, device=self.device)
                 complexities = torch.zeros(self.meta_batch_size, device=self.device)
                 for i, task in enumerate(range(self.meta_batch_size)):
-                    batch = train_taskset.sample()
                     losses[i], complexities[i] = self.get_pb_terms_single_task(
-                        batch[0].to(self.device), batch[1].to(self.device),
+                        data_batch[i][0].to(self.device), data_batch[i][1].to(self.device),
                         self.stochastic_model, posterior_models[i],
                         hyper_dvrg=hyper_dvrg, n_tasks=self.meta_batch_size)
                 pb_objective = losses.mean() + complexities.mean() + meta_complex_term

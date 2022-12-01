@@ -95,6 +95,7 @@ class MetaAdaptation(BaseMetaLearner):
             prior_params = list(self.stochastic_model.parameters())
             all_params = all_post_param + prior_params
             optimizer = self.optimizer(all_params, **self.opt_params)
+            data_batch = [train_taskset.sample() for i in range(self.meta_batch_size)]
             for step in range(self.train_adapt_steps):
                 hyper_dvrg = get_hyper_divergnce(var_prior=1e2, var_posterior=1e-3, prior_model=self.stochastic_model,
                                                  device=self.device)
@@ -102,9 +103,8 @@ class MetaAdaptation(BaseMetaLearner):
                 losses = torch.zeros(self.meta_batch_size, device=self.device)
                 complexities = torch.zeros(self.meta_batch_size, device=self.device)
                 for i, task in enumerate(range(self.meta_batch_size)):
-                    batch = train_taskset.sample()
                     losses[i], complexities[i] = self.get_pb_terms_single_task(
-                        batch[0].to(self.device), batch[1].to(self.device),
+                        data_batch[i][0].to(self.device), data_batch[i][1].to(self.device),
                         self.stochastic_model, posterior_models[i],
                         hyper_dvrg=hyper_dvrg, n_tasks=self.meta_batch_size)
                 pb_objective = losses.mean() + complexities.mean() + meta_complex_term
@@ -148,15 +148,13 @@ class MetaAdaptation(BaseMetaLearner):
         torch.cuda.empty_cache()
         return evaluation_error
 
-    def get_pb_objective(self, x_data, y_data, hyper_dvrg, meta_complex_term, posterior_models):
+    def get_pb_objective(self, batches, hyper_dvrg, meta_complex_term, posterior_models):
         losses = torch.zeros(self.meta_batch_size, device=self.device)
         complexities = torch.zeros(self.meta_batch_size, device=self.device)
         for i, task in enumerate(range(self.meta_batch_size)):
-            shuffled_indices = torch.randperm(len(y_data))
-            batch = (x_data[shuffled_indices], y_data[shuffled_indices])
+            batch = batches[i]
             D_task_xs_adapt, D_task_xs_error_eval, D_task_ys_adapt, D_task_ys_error_eval = self.split_adapt_eval(
                 batch)
-
             # Note: we can potentially use D_task_xs_adapt to optimize the bound
             losses[i], complexities[i] = self.get_pb_terms_single_task(D_task_xs_error_eval, D_task_ys_error_eval,
                                                                        self.stochastic_model, posterior_models[i],
@@ -199,13 +197,15 @@ class MetaAdaptation(BaseMetaLearner):
             prior_params = list(self.stochastic_model.parameters())
             all_params = all_post_param + prior_params
             optimizer = self.optimizer(all_params, **self.opt_params)
+            shuffles = [torch.randperm(len(D_task_ys_adapt)) for i in range(self.meta_batch_size)]
+            batches = [(D_task_xs_adapt[shuffles[i]], D_task_ys_adapt[shuffles[i]]) for i in range(self.meta_batch_size)]
             for step in range(self.train_adapt_steps):
                 hyper_kl_adaptive = get_net_densities_divergence(base_hyper_prior, self.stochastic_model, prm=1e-3)
                 hyper_kl_const = get_hyper_divergnce(var_prior=1e2, var_posterior=1e-3,
                                                      prior_model=self.stochastic_model, device=self.device)
                 hyper_dvrg = hyper_kl_adaptive * self.adaptive_factor + hyper_kl_const * self.hyper_kl_factor
                 meta_complex_term = get_meta_complexity_term(hyper_dvrg, delta=0.1, n_train_tasks=self.meta_batch_size)
-                pb_objective = self.get_pb_objective(D_task_xs_adapt, D_task_ys_adapt, hyper_dvrg,
+                pb_objective = self.get_pb_objective(batches, hyper_dvrg,
                                                      meta_complex_term, posterior_models)
                 optimizer.zero_grad()
                 pb_objective.backward()
