@@ -106,7 +106,7 @@ class BayesianVI(BaseMetaLearner):
                         data_batch[i][0].to(self.device), data_batch[i][1].to(self.device),
                         self.stochastic_model, posterior_models[i],
                         hyper_dvrg=hyper_dvrg, n_tasks=self.meta_batch_size)
-                pb_objective = losses.mean() + complexities.mean() + meta_complex_term
+                pb_objective = losses.mean() + 1e-6*complexities.mean() + 1e-6*meta_complex_term
                 optimizer.zero_grad()
                 pb_objective.backward()
                 optimizer.step()
@@ -168,7 +168,7 @@ class BayesianVI(BaseMetaLearner):
                                                              prior, self.stochastic_model)
             hyper_dvrg = get_hyper_divergnce(var_prior=1e2, var_posterior=1e-3,
                                             prior_model=self.stochastic_model, device=self.device)
-            pb_objective = loss + complexity + self.test_penalty * hyper_dvrg
+            pb_objective = loss + 1e-6*complexity + self.test_penalty * hyper_dvrg
             optimizer.zero_grad()
             pb_objective.backward()
             optimizer.step()

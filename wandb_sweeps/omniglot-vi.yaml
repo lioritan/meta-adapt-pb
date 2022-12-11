@@ -1,7 +1,7 @@
 program: ./main.py
 method: grid
 name: averaged-sweep
-project: meta-pb-omni-vi
+project: meta-pb-omni-vi2
 command:
   - ${env}
   - python3
@@ -27,7 +27,7 @@ parameters:
     values: [1e-3]
 
   train_adapt_steps:
-    values: [10, 50, 100]
+    values: [100]
 
   train_sample_size:
     value: 5
@@ -42,7 +42,7 @@ parameters:
       values: [200]
 
   optimizer_weight_decay:
-      values: [0, 1e-4]
+      values: [0]
 
   optimizer_lr_decay_epochs:
     value: 0
@@ -63,5 +63,5 @@ parameters:
     values: [ 42, 1337, 13 ]
     #values: [42, 1337, 7, 13, 999, 752, 56789, 145790, 11, 306050]
 
-# total of 3*2*2*2*3 = 72
+# total of 3*2*2 = 12
 # total of 10*2*2*3*3*3=1080 runs
