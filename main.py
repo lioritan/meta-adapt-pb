@@ -10,7 +10,7 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', default="omniglot", choices=["mini-imagenet", "omniglot", "mnist", "tiered-imagenet"],
                         help="Dataset to use.")
-    parser.add_argument('--algorithm', default="vampire", choices=["train-on-test", "maml", "bayesian-vi", "meta-adaptation", "vampire", "bmaml"],
+    parser.add_argument('--algorithm', default="vampire", choices=["train-on-test", "maml", "bayesian-vi", "meta-adaptation", "vampire", "bmaml", "bayesian-vi-two-level"],
                         help="algorithm to use.")
     parser.add_argument('--train_sample_size', default=5, type=int,
                         help="Number of training examples in the inner loop at meta-train time")
