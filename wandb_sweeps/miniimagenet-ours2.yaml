@@ -1,0 +1,77 @@
+program: ./main.py
+method: grid
+name: averaged-sweep
+project: meta-pb-inet-metaadapt2
+command:
+  - ${env}
+  - python3
+  - ${program}
+  - ${args}
+parameters:
+  dataset:
+    value: "mini-imagenet"
+
+  algorithm:
+    value: "bayesian-vi-two-level"
+
+  n_ways:
+    value: 5
+
+  n_shots:
+    values: [5]
+
+  per_task_lr:
+    values: [0.01]
+
+  meta_lr: # taken from the code
+    values: [1e-3]
+
+  train_adapt_steps: # taken from the paper
+    value: 5
+
+  train_sample_size:
+    value: 15
+
+  meta_batch_size: # taken from the paper
+    value: 2
+
+  n_epochs:
+    value: 50000
+
+  test_adapt_steps: # taken from the paper
+      value: 5
+
+  optimizer_weight_decay: # taken from the paper
+    values: [ 0 ]
+
+  optimizer_lr_decay_epochs: # taken from the paper
+    value: 10000
+
+  optimizer_lr_schedule_type: # taken from the paper
+    values: [ "step" ]
+
+  test_set_mult:
+    value: 4
+
+  n_test_epochs:
+    values: [1, 10, 100]
+
+  vampire_num_models: # taken from the paper
+    value: 10
+
+  vampire_num_models_test: # taken from the paper
+    value: 10
+
+  vampire_kl_weight: # taken from the code
+    value: 1e-6
+
+  meta_adaption_adaptive_kl_factor:
+    values: [ 0, 1e-6 ]
+
+  meta_adaptation_hyper_kl_factor:
+    values: [ 0, 1e-6 ]
+
+  seed:
+    values: [42, 1337, 7, 13, 999, 752, 56789, 145790, 11, 306050]
+
+# total of 10*2*2*3=120 runs
