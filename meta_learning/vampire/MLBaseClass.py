@@ -253,8 +253,14 @@ class MLBaseClass(object):
                                             count = 0
                                             continue
                                         else:
+                                            for i in range(0, best_epoch - 1):
+                                                partial = os.path.join(self.config['logdir'], 'Epoch_{0:d}.pt'.format(i))
+                                                try:
+                                                    os.remove(partial)
+                                                except Exception as e:
+                                                    pass
                                             for i in range(best_epoch +1, epoch_id + 1):
-                                                partial = os.path.join(self.config['logdir'], f'Epoch_{i:d}.pt')
+                                                partial = os.path.join(self.config['logdir'], 'Epoch_{0:d}.pt'.format(i))
                                                 os.remove(partial)
                                             return
 
