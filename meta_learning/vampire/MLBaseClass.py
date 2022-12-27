@@ -261,7 +261,10 @@ class MLBaseClass(object):
                                                     pass
                                             for i in range(best_epoch +1, epoch_id + 1):
                                                 partial = os.path.join(self.config['logdir'], 'Epoch_{0:d}.pt'.format(i))
-                                                os.remove(partial)
+                                                try:
+                                                    os.remove(partial)
+                                                except Exception as e:
+                                                    pass
                                             return
 
                                 del loss_temp
