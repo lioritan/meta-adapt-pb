@@ -279,6 +279,12 @@ class MLBaseClass(object):
                 torch.save(obj=checkpoint, f=checkpoint_path)
                 print('State dictionaries are saved into {0:s}\n'.format(checkpoint_path))
 
+            for i in range(0, self.config['resume_epoch'] + self.config['num_epochs'] - 1):
+                partial = os.path.join(self.config['logdir'], 'Epoch_{0:d}.pt'.format(i))
+                try:
+                    os.remove(partial)
+                except Exception as e:
+                    pass
             print('Training is completed.')
         finally:
             print('\nClose tensorboard summary writer')
