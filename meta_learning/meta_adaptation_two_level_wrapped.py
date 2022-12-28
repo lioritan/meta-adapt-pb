@@ -79,8 +79,7 @@ class MetaAdaptationMetaLearner(BaseMetaLearner):
         if n_epochs > 0:
             self.meta_learner.config['meta_adaptation_mode'] = True
             self.meta_learner.config['train_flag'] = True
-            self.meta_learner.config["resume_epoch"] = self.meta_learner.config["num_epochs"]
-            self.meta_learner.config["num_epochs"] += n_epochs
+            self.meta_learner.config["num_epochs"] = n_epochs
 
             self.meta_learner.config["k_shot"] = self.meta_learner.config["k_shot"] // 2
             dataset = torch.utils.data.TensorDataset(D_task_xs_adapt.to("cpu"), D_task_ys_adapt.to("cpu"))
@@ -88,7 +87,8 @@ class MetaAdaptationMetaLearner(BaseMetaLearner):
             self.meta_learner.train(train_dataloader=meta_adapt_loader, val_dataloader=None)
             self.meta_learner.config['meta_adaptation_mode'] = False
 
-        model = self.meta_learner.load_model(resume_epoch=self.meta_learner.config["num_epochs"],
+        self.load_saved_model(None)
+        model = self.meta_learner.load_model(resume_epoch=self.meta_learner.config["resume_epoch"],
                                              hyper_net_class=self.meta_learner.hyper_net_class,
                                              eps_dataloader=self.data_loader)
         self.meta_learner.config['train_flag'] = False
@@ -107,7 +107,7 @@ class MetaAdaptationMetaLearner(BaseMetaLearner):
                 file_epoch_num = int(file_name.split("_")[1].split(".")[0])
                 if file_epoch_num > highest_epoch:
                     highest_epoch = file_epoch_num
-        self.meta_learner.config["num_epochs"] = highest_epoch
+        self.meta_learner.config["resume_epoch"] = highest_epoch
         # done, auto-load
 
     def save_model(self, model_name):
