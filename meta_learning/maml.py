@@ -1,4 +1,5 @@
 import os
+import random
 
 import torch
 import learn2learn as l2l
@@ -120,6 +121,12 @@ class MamlMetaLearner(BaseMetaLearner):
         del D_task_xs_adapt, D_task_xs_error_eval, D_task_ys_adapt, D_task_ys_error_eval
         torch.cuda.empty_cache()
         return evaluation_error
+
+    def meta_test(self, test_taskset, n_epochs, test_shots_mult):
+        import numpy as np
+        np.random.seed(1)
+        random.seed(1)
+        super(self).meta_test(test_taskset, n_epochs, test_shots_mult)
 
     def meta_test_on_task(self, D_task_xs_adapt, D_task_ys_adapt, D_task_xs_error_eval, D_task_ys_error_eval, n_epochs, adapt_steps=None):
         total_steps = adapt_steps if adapt_steps else self.test_adapt_steps

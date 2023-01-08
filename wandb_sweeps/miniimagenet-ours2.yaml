@@ -1,7 +1,7 @@
 program: ./main.py
 method: grid
 name: averaged-sweep
-project: meta-pb-inet-metaadapt2
+project: meta-pb-inet-metaadapt3
 command:
   - ${env}
   - python3
@@ -72,6 +72,7 @@ parameters:
     values: [ 0, 1e-6 ]
 
   seed:
-    values: [42, 1337, 7, 13, 999, 752, 56789, 145790, 11, 306050]
+    values: [999, 752, 56789, 145790, 11, 306050]
+    #values: [42, 1337, 7, 13, 999, 752, 56789, 145790, 11, 306050]
 
 # total of 10*2*2*3=120 runs

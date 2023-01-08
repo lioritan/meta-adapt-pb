@@ -45,18 +45,15 @@ parameters:
       values: [0]
 
   optimizer_lr_decay_epochs:
-    value: 10
+    value: -1
 
   optimizer_lr_schedule_type:
     values: ["no_change"]
 
-  early_stop:
-    value: True
-
   test_set_mult:
-    value: 2
+    value: 4
 
   seed:
-    values: [42, 1337, 7, 13, 999, 752, 56789, 145790, 11, 306050]
+    values: [5, 6, 42, 1337, 7]
 
 # total of 10*1=10 runs

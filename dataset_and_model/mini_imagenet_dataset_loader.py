@@ -11,7 +11,7 @@ class MiniImagenetLoader(BaseDatasetLoader):
         self.test_mult = test_mult
 
     def get_deterministic_model(self):
-        return l2l.vision.models.MiniImagenetCNN(self.n_ways)
+        return l2l.vision.models.MiniImagenetCNN(self.n_ways, hidden_size=32)
 
     def get_stochastic_model(self):
         log_var_init = {"mean": -10, "std": 0.1}
