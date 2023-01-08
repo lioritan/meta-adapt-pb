@@ -67,7 +67,7 @@ def get_parser():
     parser.add_argument('--optimizer_lr_schedule_type', default="no_change", choices=["no_change", "step"],
                         help="Type of lr schedule")
     # Note: boolean values don't work in argparse, so if this is set it is always true
-    parser.add_argument('--early_stop', default=True, type=bool, help="early stop on validation")
+    parser.add_argument('--early_stop', default=False, type=bool, help="early stop on validation")
 
     parser.add_argument('--seed', type=int, default=7, help="Random seed")
     return parser
