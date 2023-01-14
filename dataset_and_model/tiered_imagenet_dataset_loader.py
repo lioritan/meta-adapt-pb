@@ -16,7 +16,7 @@ class TieredImagenetLoader(BaseDatasetLoader):
         # return l2l.vision.models.ResNet12(self.n_ways)
         #return l2l.vision.models.OmniglotFC(functools.reduce(lambda x, y: x * y, INET_SHAPE), self.n_ways,
         #                                    sizes=[128, 32])
-        return l2l.vision.models.MiniImagenetCNN(self.n_ways)
+        return l2l.vision.models.MiniImagenetCNN(self.n_ways, hidden_size=32)
 
     def get_stochastic_model(self):
         # TODO

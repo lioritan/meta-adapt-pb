@@ -246,7 +246,7 @@ class MLBaseClass(object):
                                     best_val_loss = np.mean(loss_temp)
                                 else:
                                     count += 1
-                                    if count >= patience:
+                                    if False and count >= patience:
                                         print(
                                             f"early stop condition met, epoch: {epoch_id}, {np.mean(loss_temp)}, {best_val_loss}")
                                         if epoch_id < (self.config['num_epochs'] // 10):
@@ -277,6 +277,11 @@ class MLBaseClass(object):
                 }
                 checkpoint_path = os.path.join(self.config['logdir'], 'Epoch_{0:d}.pt'.format(epoch_id + 1))
                 torch.save(obj=checkpoint, f=checkpoint_path)
+                try:
+                    if not False:
+                        os.remove(os.path.join(self.config['logdir'], 'Epoch_{0:d}.pt'.format(epoch_id)))
+                except Exception as e:
+                    pass
                 print('State dictionaries are saved into {0:s}\n'.format(checkpoint_path))
 
             for i in range(0, self.config['resume_epoch'] + self.config['num_epochs'] - 1):
