@@ -31,17 +31,29 @@ class ExperimentRunner(object):
     def run_experiment(self, algorithm: BaseMetaLearner, dataset: BaseDatasetLoader, seed):
         model_name = f"artifacts/{dataset.get_name()}/{seed}/{str(algorithm.__class__.__name__)}.pkl"
         os.makedirs(f"artifacts/{dataset.get_name()}/{seed}", exist_ok=True)
-        if self.load_trained:
-            print(f"load trained model")
-            algorithm.load_saved_model(model_name=model_name)
-        else:
-            print(f"meta learner train")
+        # if self.load_trained:
+        #     print(f"load trained model")
+        #     algorithm.load_saved_model(model_name=model_name)
+        # else:
+        #     print(f"meta learner train")
+        #     set_random_seed(seed)
+        #     algorithm.meta_train(dataset.train_taskset(self.n_ways, self.n_shots_train),
+        #                          dataset.validation_taskset(self.n_ways, self.n_shots_train),
+        #                          self.n_epochs_train)
+        #     algorithm.save_model(model_name=model_name)
+        #
+        # set_random_seed(seed)
+        # return algorithm.meta_test(dataset.test_taskset(self.n_ways, self.n_shots_test),
+        #                            self.n_epochs_test, self.test_set_mult)
+
+        for i in range(self.n_epochs_train//100):
             set_random_seed(seed)
             algorithm.meta_train(dataset.train_taskset(self.n_ways, self.n_shots_train),
                                  dataset.validation_taskset(self.n_ways, self.n_shots_train),
-                                 self.n_epochs_train)
-            algorithm.save_model(model_name=model_name)
+                                 100)
+            set_random_seed(seed)
+            r = algorithm.meta_test(dataset.test_taskset(self.n_ways, self.n_shots_test),
+                                self.n_epochs_test, self.test_set_mult)
+            print((i+1)*100, r[1])
+            algorithm.load_saved_model(model_name=model_name)
 
-        set_random_seed(seed)
-        return algorithm.meta_test(dataset.test_taskset(self.n_ways, self.n_shots_test),
-                                   self.n_epochs_test, self.test_set_mult)

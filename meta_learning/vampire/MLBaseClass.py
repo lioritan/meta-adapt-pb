@@ -282,7 +282,7 @@ class MLBaseClass(object):
                         os.remove(os.path.join(self.config['logdir'], 'Epoch_{0:d}.pt'.format(epoch_id)))
                 except Exception as e:
                     pass
-                print('State dictionaries are saved into {0:s}\n'.format(checkpoint_path))
+                #print('State dictionaries are saved into {0:s}\n'.format(checkpoint_path))
 
             for i in range(0, self.config['resume_epoch'] + self.config['num_epochs'] - 1):
                 partial = os.path.join(self.config['logdir'], 'Epoch_{0:d}.pt'.format(i))

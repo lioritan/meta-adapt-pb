@@ -52,16 +52,16 @@ class VampireMetaLearner(BaseMetaLearner):
 
     def meta_train(self, train_taskset, validation_taskset, n_epochs):
         self.data_loader = train_taskset
-        self.vampire.config['num_epochs'] = n_epochs
+        self.vampire.config['num_epochs'] = self.vampire.config["resume_epoch"]+ n_epochs
         self.vampire.config['num_inner_updates'] = self.train_adapt_steps
         self.vampire.train(train_dataloader=train_taskset, val_dataloader=validation_taskset)
 
     def meta_test_on_task(self, D_task_xs_adapt, D_task_ys_adapt, D_task_xs_error_eval, D_task_ys_error_eval, n_epochs):
-        self.vampire.config['num_inner_updates'] = n_epochs
+        self.vampire.config['num_inner_updates'] = self.vampire.config['num_episodes']
         self.vampire.config['num_models'] = self.num_models_test
         self.vampire.config['train_flag'] = False
         self.load_saved_model(None) # for early stopping
-        model = self.vampire.load_model(resume_epoch=self.vampire.config["num_epochs"],
+        model = self.vampire.load_model(resume_epoch=self.vampire.config["resume_epoch"],
                                         hyper_net_class=self.vampire.hyper_net_class,
                                         eps_dataloader=self.data_loader)
         loss, acc = self.vampire.evaluation(D_task_xs_adapt, D_task_ys_adapt, D_task_xs_error_eval,
@@ -77,7 +77,7 @@ class VampireMetaLearner(BaseMetaLearner):
                 file_epoch_num = int(file_name.split("_")[1].split(".")[0])
                 if file_epoch_num > highest_epoch:
                     highest_epoch = file_epoch_num
-        self.vampire.config["num_epochs"] = highest_epoch
+        self.vampire.config["resume_epoch"] = highest_epoch
         # done, auto-load
 
     def save_model(self, model_name):
