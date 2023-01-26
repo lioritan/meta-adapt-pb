@@ -57,3 +57,7 @@ class ExperimentRunner(object):
             print((i+1)*100, r[1])
             algorithm.load_saved_model(model_name=model_name)
 
+        set_random_seed(seed)
+        return algorithm.meta_test(dataset.test_taskset(self.n_ways, self.n_shots_test),
+                                    self.n_epochs_test, self.test_set_mult)
+
