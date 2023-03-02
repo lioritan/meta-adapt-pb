@@ -215,6 +215,7 @@ class MLBaseClass(object):
                                           self.config['minibatch_print']
 
                             tb_writer.add_scalar(tag="Train_Loss", scalar_value=loss_monitor, global_step=global_step)
+                            tb_writer.flush()
 
                             # reset monitoring variables
                             loss_monitor = 0.
@@ -236,6 +237,7 @@ class MLBaseClass(object):
                                                      global_step=global_step)
                                 tb_writer.add_scalar(tag="Val_Accuracy", scalar_value=np.mean(accuracy_temp),
                                                      global_step=global_step)
+                                tb_writer.flush()
 
                                 model["f_base_net"].train()
 

@@ -29,7 +29,7 @@ class MetaAdaptationMetaLearner(BaseMetaLearner):
         config = {
             'resume_epoch': 0,
             'logdir': "artifacts/vi" if not dataset_name else f"artifacts/{dataset_name}/vi/{args_hash}",
-            'minibatch_print': -1,  # !
+            'minibatch_print': 1,  # !
             'num_episodes_per_epoch': meta_batch_size,  # number of meta updates per epoch
             'train_val_split_function': train_val_split,
             'k_shot': k_shots,
@@ -80,8 +80,9 @@ class MetaAdaptationMetaLearner(BaseMetaLearner):
             self.meta_learner.config['meta_adaptation_mode'] = True
             self.meta_learner.config['train_flag'] = True
             self.meta_learner.config["num_epochs"] = n_epochs
+            self.meta_learner.config["minibatch"] = 1  # update meta parameters
 
-            self.meta_learner.config["k_shot"] = self.meta_learner.config["k_shot"] // 2
+            self.meta_learner.config["k_shot"] = self.meta_learner.config["k_shot"] // 2  # split adaptation to trn/val
             dataset = torch.utils.data.TensorDataset(D_task_xs_adapt.to("cpu"), D_task_ys_adapt.to("cpu"))
             meta_adapt_loader = torch.utils.data.DataLoader(dataset, batch_size=len(D_task_ys_adapt), shuffle=True)
             self.meta_learner.train(train_dataloader=meta_adapt_loader, val_dataloader=None)
@@ -153,8 +154,8 @@ class MetaAdaptationClass(MLBaseClass):
 
                 cls_loss = self.config['loss_function'](input=y_logits, target=y)
 
-                #loss = cls_loss + self.config['KL_weight'] * KL_loss
-                loss = cls_loss + self.config['KL_weight'] * KL_complexity
+                loss = cls_loss + self.config['KL_weight'] * KL_loss
+                #loss = cls_loss + self.config['KL_weight'] * KL_complexity
 
                 if self.config['first_order']:
                     grads = torch.autograd.grad(
@@ -177,7 +178,6 @@ class MetaAdaptationClass(MLBaseClass):
             for param, grad in zip(q_params, grads_accum):
                 new_q_params.append(higher.optim._add(tensor=param, a1=-self.config['inner_lr'], a2=grad))
 
-            p_params = [params.detach() for params in f_hyper_net.fast_params]
             f_hyper_net.update_params(new_q_params)
 
         return f_hyper_net
@@ -207,11 +207,11 @@ class MetaAdaptationClass(MLBaseClass):
         for logits_ in logits:
             loss = loss + self.config['loss_function'](input=logits_, target=y)
 
-        loss = loss / len(logits)
+        orig_loss = loss / len(logits)
 
         # KL loss
         KL_loss = self.KL_divergence_standard_normal(p=adapted_hyper_net.fast_params)
-        loss = loss + self.config["test_hyper_kl"] * KL_loss
+        loss = orig_loss + self.config["test_hyper_kl"] * KL_loss
 
         if self.config['meta_adaptation_mode']:
             f_hyper_net = higher.patch.monkeypatch(
@@ -268,8 +268,8 @@ class MetaAdaptationClass(MLBaseClass):
         return KL_div
 
     @staticmethod
-    def KL_divergence_standard_normal(p: typing.List[torch.Tensor], sigma=1e2) -> typing.Union[torch.Tensor, float]:
-        """Calculate KL divergence between a diagonal Gaussian with N(0, \sigma^2 * I)
+    def KL_divergence_standard_normal(p: typing.List[torch.Tensor]) -> typing.Union[torch.Tensor, float]:
+        """Calculate KL divergence between a diagonal Gaussian with N(0, I)
         """
         KL_div = 0
 
@@ -278,9 +278,12 @@ class MetaAdaptationClass(MLBaseClass):
         for i in range(n):
             p_mean = p[i]
             p_log_std = p[n + i]
-            numerator = torch.square(input=p_mean) + torch.exp(input=2 * p_log_std)
-            denominator = sigma**2
-            div_elem = 0.5 * torch.sum(math.log(sigma) - p_log_std + numerator / denominator - 1)
-            KL_div += div_elem
+
+            KL_div = KL_div + torch.sum(input=torch.square(input=p_mean))
+            KL_div = KL_div + torch.sum(input=torch.exp(input=2 * p_log_std))
+            KL_div = KL_div - n
+            KL_div = KL_div - 2 * torch.sum(input=p_log_std)
+
+        KL_div = KL_div / 2
 
         return KL_div
